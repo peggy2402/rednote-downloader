@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <input type="text" id="urlInput" placeholder="Dán link Xiaohongshu tại đây..." />
+    <br/>
+    <input type="text" id="cookieInput" placeholder="Cookie (tùy chọn, nếu cần)" />
+    <button onclick="extractMedia()">Trích Xuất</button>
+    <div id="result"></div>
+    <script>
+        async function extractMedia() {
+            const url = document.getElementById('urlInput').value;
+            const cookie = document.getElementById('cookieInput').value;
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = "Đang xử lý...";
+            const response = await fetch('http://localhost:8000/api/extract', { // URL backend của bạn
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({url: url, cookie: cookie})
+            });
+            const data = await response.json();
+            if(data.success && data.video_urls.length > 0){
+                resultDiv.innerHTML = `<p>Thành công! Nhấn để tải:</p>
+                                       <a href="${data.video_urls[0]}" download>Video.mp4</a>`;
+            } else {
+                resultDiv.innerHTML = `<p>Thất bại: ${data.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
