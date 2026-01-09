@@ -325,4 +325,7 @@ def proxy_image():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)  # Set debug=False in production
+    import os
+    port = int(os.getenv('PORT', 5000))
+    debug = os.getenv('FLASK_ENV', 'production') == 'development'
+    app.run(debug=debug, host='0.0.0.0', port=port)
