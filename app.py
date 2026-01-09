@@ -113,7 +113,7 @@ def download_proxy():
     
     # Xác định loại nội dung
     is_video = 'sns-video' in url or '.mp4' in url
-    is_image = any(ext in url for ext in ['.jpg', '.jpeg', '.png', '.webp'])
+    is_image = any(ext in url for ext in ['.jpg', '.jpeg', '.png', '.webp', 'xhscdn', 'xiaohongshu']) or '/notes_pre_post/' in url
     
     try:
         headers = {
@@ -132,11 +132,34 @@ def download_proxy():
         parsed = urlparse(url)
         filename = unquote(os.path.basename(parsed.path)) or 'download'
         
-        # Thêm extension nếu thiếu
-        if is_video and not filename.endswith('.mp4'):
-            filename += '.mp4'
-        elif is_image and not any(filename.endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.webp']):
-            filename += '.jpg'
+        # Nếu filename quá dài hoặc có ký tự đặc biệt, tạo filename mới
+        if len(filename) > 50 or '!' in filename:
+            import time
+            timestamp = int(time.time())
+            if is_video:
+                filename = f'video_{timestamp}.mp4'
+            else:
+                # Kiểm tra content-type từ response
+                content_type = r.headers.get('content-type', '')
+                if 'webp' in content_type:
+                    filename = f'image_{timestamp}.webp'
+                elif 'png' in content_type:
+                    filename = f'image_{timestamp}.png'
+                else:
+                    filename = f'image_{timestamp}.jpg'
+        else:
+            # Thêm extension nếu thiếu
+            if is_video and not filename.endswith('.mp4'):
+                filename += '.mp4'
+            elif is_image and not any(filename.endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.webp']):
+                # Kiểm tra content-type
+                content_type = r.headers.get('content-type', '')
+                if 'webp' in content_type:
+                    filename += '.webp'
+                elif 'png' in content_type:
+                    filename += '.png'
+                else:
+                    filename += '.jpg'
         
         def generate():
             for chunk in r.iter_content(chunk_size=8192):
@@ -146,7 +169,7 @@ def download_proxy():
         # Xác định content-type
         content_type = r.headers.get('content-type', 
             'video/mp4' if is_video else 
-            'image/jpeg' if is_image else 
+            'image/webp' if is_image else 
             'application/octet-stream')
         
         resp = Response(stream_with_context(generate()), content_type=content_type)
@@ -200,6 +223,105 @@ def debug_scraper():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+# Endpoint để tải tất cả ảnh thành ZIP file
+@app.route('/download-all', methods=['POST'])
+def download_all():
+    data = request.get_json()
+    urls = data.get('urls', [])
+    
+    if not urls or len(urls) == 0:
+        return jsonify({'error': 'No URLs provided'}), 400
+    
+    try:
+        import io
+        import zipfile
+        from datetime import datetime
+        
+        # Tạo ZIP file trong memory
+        zip_buffer = io.BytesIO()
+        
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Referer': 'https://www.xiaohongshu.com/'
+            }
+            
+            for idx, url in enumerate(urls, 1):
+                try:
+                    # Fetch image
+                    resp = requests.get(url, headers=headers, timeout=10, stream=True)
+                    resp.raise_for_status()
+                    
+                    # Xác định extension
+                    content_type = resp.headers.get('content-type', '')
+                    if 'webp' in content_type:
+                        ext = 'webp'
+                    elif 'png' in content_type:
+                        ext = 'png'
+                    else:
+                        ext = 'jpg'
+                    
+                    # Tên file trong ZIP
+                    filename = f'image_{idx:03d}.{ext}'
+                    
+                    # Thêm vào ZIP
+                    zip_file.writestr(filename, resp.content)
+                    
+                except Exception as e:
+                    # Skip ảnh lỗi
+                    continue
+        
+        # Chuẩn bị response
+        zip_buffer.seek(0)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        zip_filename = f'xiaohongshu_images_{timestamp}.zip'
+        
+        resp = Response(zip_buffer.getvalue(), 
+                       content_type='application/zip')
+        resp.headers['Content-Disposition'] = f'attachment; filename="{zip_filename}"'
+        
+        return resp
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# Proxy endpoint để load ảnh từ XHS (bypass CORS + headers)
+@app.route('/proxy-image')
+def proxy_image():
+    img_url = request.args.get('url')
+    if not img_url:
+        return jsonify({'error': 'Missing URL'}), 400
+    
+    # Basic security: chỉ cho phép URLs từ XHS
+    if 'xhscdn.com' not in img_url and 'xiaohongshu.com' not in img_url:
+        return jsonify({'error': 'Invalid image source'}), 403
+    
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Referer': 'https://www.xiaohongshu.com/',
+            'Accept': 'image/webp,image/*,*/*;q=0.8'
+        }
+        
+        response = requests.get(img_url, headers=headers, timeout=10, stream=True)
+        response.raise_for_status()
+        
+        # Stream image data
+        def generate():
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    yield chunk
+        
+        resp = Response(stream_with_context(generate()), 
+                       content_type=response.headers.get('content-type', 'image/jpeg'))
+        resp.headers['Cache-Control'] = 'public, max-age=3600'
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp
+    except Exception as e:
+        return jsonify({'error': str(e)}), 502
 
 
 if __name__ == '__main__':

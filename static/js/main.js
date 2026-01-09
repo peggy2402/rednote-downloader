@@ -79,34 +79,44 @@ document.getElementById('downloadBtn').addEventListener('click', async () => {
             } else if (data.data.type === 'image' || Array.isArray(data.data.media_urls)) {
                 const images = data.data.media_urls || [];
                 const count = data.data.count || images.length;
+                
+                // Detect mobile device
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                
                 let imgsHtml = `
                     <p><strong>Tiêu đề:</strong> ${title}</p>
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <p class="mb-0"><strong>Tổng số ảnh:</strong> <span class="badge bg-primary">${count}</span></p>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="downloadAllImages(${JSON.stringify(images)})">
-                            <i class="fas fa-download"></i> Tải tất cả
-                        </button>
+                        ${isMobile ? 
+                            `<button class="btn btn-sm btn-outline-secondary" id="downloadAllBtn" data-images='${JSON.stringify(images).replace(/'/g, "&apos;")}'>
+                                <i class="fas fa-download"></i> Tải tất cả
+                            </button>` :
+                            `<button class="btn btn-sm btn-success" id="downloadZipBtn" data-images='${JSON.stringify(images).replace(/'/g, "&apos;")}'>
+                                <i class="fas fa-file-archive"></i> Tải ZIP
+                            </button>`
+                        }
                     </div>
                     <div class="d-flex flex-row overflow-auto gap-3 gallery" style="padding: 10px 0;">
                 `;
                 images.forEach((img, idx) => {
-                    // Sử dụng proxy cho ảnh nếu cần
-                    const displayUrl = img;
+                    // Sử dụng proxy cho ảnh
+                    const proxyUrl = `/proxy-image?url=${encodeURIComponent(img)}`;
                     imgsHtml += `
                         <div class="text-center flex-shrink-0" style="min-width:190px">
                             <a href="${img}" target="_blank" class="d-block mb-2">
-                                <img src="${displayUrl}" 
+                                <img src="${proxyUrl}" 
                                      class="rounded border" 
                                      style="max-width:180px; max-height:220px; object-fit:cover; cursor:pointer;" 
                                      loading="lazy"
-                                     alt="Image ${idx + 1}">
+                                     alt="Image ${idx + 1}"
+                                     onerror="this.style.display='none'; this.parentElement.innerHTML+='<p class=text-danger>Lỗi tải ảnh</p>'">
                             </a>
                             <div class="d-flex gap-1 justify-content-center flex-wrap">
-                                <a href="/download?url=${encodeURIComponent(img)}&referer=${encodeURIComponent('https://www.xiaohongshu.com/')}" 
+                                <a href="/download?url=${encodeURIComponent(img)}" 
                                    class="btn btn-sm btn-success" title="Tải ảnh này">
                                     <i class="fas fa-download"></i>
                                 </a>
-                                <a href="${img}" target="_blank" class="btn btn-sm btn-outline-primary" title="Xem ảnh">
+                                <a href="${img}" target="_blank" class="btn btn-sm btn-outline-primary" title="Xem ảnh gốc">
                                     <i class="fas fa-eye"></i>
                                 </a>
                             </div>
@@ -116,6 +126,41 @@ document.getElementById('downloadBtn').addEventListener('click', async () => {
                 });
                 imgsHtml += `</div>`;
                 resultContent.innerHTML = imgsHtml;
+                
+                // Thêm event listeners
+                setTimeout(() => {
+                    // Nút "Tải tất cả" (mobile)
+                    const allBtn = document.getElementById('downloadAllBtn');
+                    if (allBtn) {
+                        allBtn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const imgStr = allBtn.getAttribute('data-images');
+                            try {
+                                const urls = JSON.parse(imgStr);
+                                downloadAllImages(urls);
+                            } catch (err) {
+                                console.error('Parse error:', err);
+                                showError('Lỗi: Không thể parse dữ liệu ảnh. ' + err.message);
+                            }
+                        });
+                    }
+                    
+                    // Nút "Tải ZIP" (desktop)
+                    const zipBtn = document.getElementById('downloadZipBtn');
+                    if (zipBtn) {
+                        zipBtn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const imgStr = zipBtn.getAttribute('data-images');
+                            try {
+                                const urls = JSON.parse(imgStr);
+                                downloadAsZip(urls);
+                            } catch (err) {
+                                console.error('Parse error:', err);
+                                showError('Lỗi: Không thể parse dữ liệu ảnh. ' + err.message);
+                            }
+                        });
+                    }
+                }, 100);
             } else {
                 // Fallback: show raw JSON
                 resultContent.innerHTML = `<pre>${JSON.stringify(data.data, null, 2)}</pre>`;
@@ -142,18 +187,141 @@ function copyToClipboard(text) {
         console.error('Copy failed:', err);
     });
 }
+
 function downloadAllImages(urls) {
+    console.log('downloadAllImages called with:', urls);
+    
+    if (!urls || urls.length === 0) {
+        showError('Không có ảnh để tải xuống.');
+        return;
+    }
+    
+    console.log(`Starting download of ${urls.length} images`);
+    
+    // Hiển thị thông báo bắt đầu
+    const resultContainer = document.getElementById('resultContainer');
+    const originalContent = resultContainer.innerHTML;
+    
+    const progressMsg = document.createElement('div');
+    progressMsg.className = 'alert alert-info mt-3';
+    progressMsg.innerHTML = `
+        <i class="fas fa-download"></i> 
+        <strong>Đang tải ${urls.length} ảnh...</strong>
+        <div class="progress mt-2" style="height: 20px;">
+            <div id="downloadProgress" class="progress-bar bg-success" role="progressbar" style="width: 0%">
+                <span id="progressText">0/${urls.length}</span>
+            </div>
+        </div>
+    `;
+    resultContainer.appendChild(progressMsg);
+    
+    let completed = 0;
+    
     urls.forEach((url, index) => {
         setTimeout(() => {
+            console.log(`Downloading image ${index + 1}/${urls.length}: ${url}`);
+            
             const link = document.createElement('a');
-            link.href = `/download?url=${encodeURIComponent(url)}&referer=${encodeURIComponent('https://www.xiaohongshu.com/')}`;
-            link.download = `image_${index + 1}.jpg`;
+            link.href = `/download?url=${encodeURIComponent(url)}`;
+            link.download = '';
+            
+            document.body.appendChild(link);
+            link.click();
+            
+            // Cleanup sau một chút
+            setTimeout(() => {
+                document.body.removeChild(link);
+            }, 100);
+            
+            // Update progress bar
+            completed++;
+            const percent = Math.round((completed / urls.length) * 100);
+            const progressBar = document.getElementById('downloadProgress');
+            const progressText = document.getElementById('progressText');
+            if (progressBar) progressBar.style.width = percent + '%';
+            if (progressText) progressText.textContent = `${completed}/${urls.length}`;
+            
+            // Thông báo hoàn thành
+            if (completed === urls.length) {
+                console.log('All downloads completed!');
+                progressMsg.innerHTML = `
+                    <i class="fas fa-check-circle text-success"></i> 
+                    <strong>✓ Đã tải xong ${urls.length} ảnh!</strong>
+                    <p class="mb-0 mt-2"><small>Nếu trình duyệt chặn, hãy cho phép downloads từ trang này.</small></p>
+                `;
+            }
+        }, index * 300);
+    });
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showError('✓ Đã copy link!');
+        setTimeout(() => {
+            document.getElementById('errorContainer').style.display = 'none';
+        }, 2000);
+    });
+}
+
+function downloadAsZip(urls) {
+    console.log('downloadAsZip called with:', urls.length, 'images');
+    
+    if (!urls || urls.length === 0) {
+        showError('Không có ảnh để tải xuống.');
+        return;
+    }
+    
+    // Hiển thị progress
+    const resultContainer = document.getElementById('resultContainer');
+    const progressMsg = document.createElement('div');
+    progressMsg.className = 'alert alert-info mt-3';
+    progressMsg.innerHTML = `
+        <i class="fas fa-spinner fa-spin"></i> 
+        <strong>Đang chuẩn bị ZIP...</strong>
+    `;
+    resultContainer.appendChild(progressMsg);
+    
+    // Gửi request tới /download-all
+    fetch('/download-all', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ urls: urls })
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Server error');
+        
+        // Download ZIP
+        return response.blob().then(blob => {
+            const timestamp = new Date().toISOString().slice(0, 10);
+            const filename = `xiaohongshu_images_${timestamp}.zip`;
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-        }, index * 500); // Delay 500ms giữa mỗi lần tải
+            
+            // Success message
+            progressMsg.innerHTML = `
+                <i class="fas fa-check-circle text-success"></i> 
+                <strong>✓ Đã tải ZIP ${urls.length} ảnh!</strong>
+                <p class="mb-0 mt-2"><small>File: <code>${filename}</code></small></p>
+            `;
+        });
+    })
+    .catch(error => {
+        console.error('ZIP download error:', error);
+        progressMsg.innerHTML = `
+            <i class="fas fa-exclamation-circle text-danger"></i> 
+            <strong>Lỗi tải ZIP</strong>
+            <p class="mb-0 mt-2"><small>${error.message}</small></p>
+        `;
     });
 }
+
 function showError(message) {
     const errorContainer = document.getElementById('errorContainer');
     const errorText = document.getElementById('errorText');
