@@ -10,18 +10,14 @@ logger = logging.getLogger(__name__)
 
 def parse_rednote_url(url):
     """
-    Tìm URL video trực tiếp từ Xiaohongshu bằng cách gọi API XHS.
+    Tìm URL media từ Xiaohongshu, ưu tiên dùng API.
     """
-    # Extract post ID từ URL
-    # Format: https://www.xiaohongshu.com/explore/[POST_ID]?...
+    import json
     post_id = None
-    
-    # Cách 1: Từ /explore/ path
     explore_match = re.search(r'/explore/([a-zA-Z0-9]+)', url)
     if explore_match:
         post_id = explore_match.group(1)
     
-    # Cách 2: Từ /user/[USER_ID]/[POST_ID] 
     if not post_id:
         user_match = re.search(r'/user/[a-zA-Z0-9]+/([a-zA-Z0-9]+)', url)
         if user_match:
@@ -30,67 +26,58 @@ def parse_rednote_url(url):
     if not post_id:
         return {'error': 'Không thể extract ID từ URL.'}
     
-    # Gọi XHS API để lấy dữ liệu post
+    # THỬ CÁCH 1: Gọi API chi tiết note chính thức (nếu có)
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'application/json, text/plain, */*',
         'Accept-Language': 'zh-CN,zh;q=0.9',
-        'Content-Type': 'application/json;charset=UTF-8',
-        'Origin': 'https://www.xiaohongshu.com',
         'Referer': 'https://www.xiaohongshu.com/',
+        'Origin': 'https://www.xiaohongshu.com',
+        # Cookie có thể cần thiết, bạn có thể cần cập nhật nó thủ công nếu có
+        'Cookie': 'xsec_source=pc_feed;'
     }
     
     try:
-        # API endpoint để lấy chi tiết post
-        api_url = 'https://edith.xiaohongshu.com/api/sns/web/v1/feed'
+        # API endpoint chính thức để lấy chi tiết một note - ĐÂY LÀ ĐIỂM SỬA QUAN TRỌNG
+        api_detail_url = f'https://edith.xiaohongshu.com/api/sns/web/v1/note/{post_id}'
+        logger.info(f"Đang thử gọi API: {api_detail_url}")
         
-        payload = {
-            'cursor_score': '',
-            'num': 1,
-            'refresh_type': 1,
-            'note_index': 0,
-            'unread_begin_note_id': '',
-            'unread_end_note_id': '',
-            'unread_note_count': 0,
-            'category': 'explore'
-        }
-        
-        response = requests.post(api_url, json=payload, headers=headers, timeout=10)
+        response = requests.get(api_detail_url, headers=headers, timeout=10)
         response.raise_for_status()
-        
         data = response.json()
-        # Thử tìm post trong response
-        items = data.get('data', {}).get('items', [])
         
-        if not items:
-            # Fallback: gọi API khác
-            return fetch_from_web_page(url)
+        # Debug: Log cấu trúc dữ liệu trả về
+        logger.debug(f"API response keys: {data.keys() if isinstance(data, dict) else 'not dict'}")
         
-        for item in items:
-            interact = item.get('interact_info', {})
-            note = interact.get('note_card', {})
-            
-            if note.get('note_id') == post_id or note.get('interact_id') == post_id:
-                return extract_media_from_note(note)
-        
-        # Nếu không tìm được trong feed, thử parse HTML
-        return fetch_from_web_page(url)
-        
+        # Đường dẫn dữ liệu có thể thay đổi, cần kiểm tra kỹ
+        note_data = data.get('data', {}).get('items', [{}])[0] if data.get('data', {}).get('items') else data.get('data', {})
+        if note_data:
+            result = extract_media_from_note(note_data)
+            if not result.get('error'):
+                return result
     except Exception as e:
-        # Fallback: parse HTML
-        return fetch_from_web_page(url)
+        logger.warning(f"API chi tiết thất bại, chuyển sang parse HTML: {e}")
+    
+    # THỬ CÁCH 2: Parse HTML trang (fallback)
+    return fetch_from_web_page(url)
 
 
 def fetch_from_web_page(url):
     """
-    Fallback: parse HTML page trực tiếp để lấy ảnh/video
+    Parse HTML page để lấy ảnh/video.
+    Tối ưu để tìm dữ liệu JSON ẩn.
     """
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-        'Referer': 'https://www.xiaohongshu.com/',
-        'Cookie': 'xsec_source=pc_feed'
+        'Referer': 'https://www.xiaohongshu.com/',  # QUAN TRỌNG
+        'Cookie': 'xsec_source=pc_feed',
+        'Origin': 'https://www.xiaohongshu.com',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'same-origin',
+        'Upgrade-Insecure-Requests': '1'
     }
     
     try:
@@ -98,155 +85,165 @@ def fetch_from_web_page(url):
         response.raise_for_status()
         html_content = response.text
         
-        logger.info(f"✓ Đã fetch HTML, dung lượng: {len(html_content)} bytes")
-        
-        soup = BeautifulSoup(html_content, 'html.parser')
-        
-        # 1) Tìm link video trực tiếp
+        # Trích xuất token từ URL nếu có
+        token = None
+        token_match = re.search(r'xsec_token=([^&]+)', url)
+        if token_match:
+            token = token_match.group(1)
+
+        # THỬ CÁCH A: Tìm video trực tiếp
         video_pattern = r'https?://sns-video[^\s<>"\']+\.mp4'
         video_matches = re.findall(video_pattern, html_content, re.IGNORECASE)
-        
         if video_matches:
+            quality_order = ['_1080', '_720', '_480', '_360', '_258']
             chosen = video_matches[0]
-            for v in video_matches:
-                if '_258.' in v or '_720' in v or '_1080' in v:
-                    chosen = v
+            for quality in quality_order:
+                for v in video_matches:
+                    if quality in v:
+                        chosen = v
+                        break
+                if chosen != video_matches[0]:
                     break
-            return {
+
+            result = {
                 'type': 'video',
                 'media_url': chosen,
                 'view_url': chosen,
+                'origin_url': url,  # Thêm URL gốc
                 'title': 'Xiaohongshu Video'
             }
+
+            if token:
+                result['token'] = token
+                
+            return result
         
-        # 2) Tìm ảnh từ script tags (dữ liệu JSON embed)
-        images_found = []
+        # THỬ CÁCH B: Parse kỹ các thẻ <script> để tìm JSON chứa ảnh
+        soup = BeautifulSoup(html_content, 'html.parser')
+        all_images = []
         
-        # Pattern để tìm image URLs (sns-webpic)
-        img_pattern = r'https?://[a-z0-9-]*\.(?:xhscdn\.com|xiaohongshu\.com)/[^\s<>"\']*?\.(?:jpg|jpeg|png|webp|heic|heif)'
+        # Pattern cho link ảnh Xiaohongshu (đã mở rộng)
+        img_pattern = r'(https?://[a-z0-9\-.]*\.?(xhscdn\.com|xiaohongshu\.com)[^\s<>"\']*\.(?:jpg|jpeg|png|webp|heic|heif|avif))'
         
-        # Tìm trong tất cả script tags
-        scripts = soup.find_all('script')
-        for script in scripts:
+        # Tìm trong TẤT CẢ script tags
+        for script in soup.find_all('script'):
             if script.string:
-                try:
-                    img_matches = re.findall(img_pattern, script.string, re.IGNORECASE)
-                    images_found.extend(img_matches)
-                    
-                    # Thử parse JSON để lấy thêm dữ liệu
+                content = script.string
+                # Tìm các object JSON lớn (thường chứa dữ liệu note)
+                json_matches = re.findall(r'window\.__INITIAL_STATE__\s*=\s*(\{.*?\})\s*;', content, re.DOTALL)
+                for json_str in json_matches:
                     try:
-                        # Tìm JSON object trong script
-                        json_match = re.search(r'\{.*?"image".*?\}', script.string, re.DOTALL)
-                        if json_match:
-                            json_str = json_match.group(0)
-                            # Extract URLs từ JSON
-                            json_urls = re.findall(img_pattern, json_str, re.IGNORECASE)
-                            images_found.extend(json_urls)
-                    except:
+                        json_data = json.loads(json_str)
+                        # Dùng hàm đệ quy để tìm tất cả URL ảnh trong JSON
+                        def extract_urls_from_json(obj):
+                            urls = []
+                            if isinstance(obj, dict):
+                                for key, value in obj.items():
+                                    if isinstance(value, str) and re.match(img_pattern, value, re.IGNORECASE):
+                                        urls.append(value)
+                                    else:
+                                        urls.extend(extract_urls_from_json(value))
+                            elif isinstance(obj, list):
+                                for item in obj:
+                                    urls.extend(extract_urls_from_json(item))
+                            return urls
+                        
+                        found_urls = extract_urls_from_json(json_data)
+                        all_images.extend(found_urls)
+                    except json.JSONDecodeError:
                         pass
-                except:
-                    pass
+                
+                # Vẫn tìm bằng regex trực tiếp trong script như cũ
+                found = re.findall(img_pattern, content, re.IGNORECASE)
+                all_images.extend(found)
         
-        # 3) Tìm img tags
-        for img_tag in soup.find_all('img'):
-            src = img_tag.get('src', '')
-            if 'xhscdn' in src or 'xiaohongshu' in src:
-                if src not in images_found:
-                    images_found.append(src)
-        
-        # 4) Tìm picture > source tags
-        for pic in soup.find_all('picture'):
-            for source in pic.find_all('source'):
-                srcset = source.get('srcset', '')
-                if 'xhscdn' in srcset or 'xiaohongshu' in srcset:
-                    # Extract URLs từ srcset
-                    urls = re.findall(r'https?://[^\s]+', srcset)
-                    images_found.extend(urls)
-        
-        # Loại bỏ trùng lặp và filter
-        unique_imgs = []
-        for img in images_found:
-            # Lọc URL hợp lệ
-            if img and len(img) > 20 and 'xhscdn' in img and not img.endswith('!'):
-                # Remove query params và fragments
-                clean_url = img.split('?')[0].split('#')[0]
-                if clean_url not in unique_imgs:
-                    unique_imgs.append(clean_url)
-        
-        if unique_imgs:
-            unique_imgs = unique_imgs[:20]
-            page_title = soup.title.string.strip() if soup.title and soup.title.string else 'Xiaohongshu Images'
-            logger.info(f"✓ Tìm thấy {len(unique_imgs)} ảnh từ scripts")
-            return {
-                'type': 'image',
-                'media_urls': unique_imgs,
-                'title': page_title,
-                'count': len(unique_imgs)
-            }
-        
-        # 5) Tìm og:image
+        # THỬ CÁCH C: Tìm trong thẻ meta và img thông thường
         og_image = soup.find('meta', property='og:image')
         if og_image and og_image.get('content'):
-            return {
-                'type': 'image',
-                'media_urls': [og_image.get('content')],
-                'title': soup.title.string.strip() if soup.title and soup.title.string else 'Xiaohongshu Image',
-                'count': 1
-            }
+            all_images.append(og_image.get('content'))
         
-        # 6) Last resort: find any image-like URLs in HTML
-        all_urls = re.findall(r'https?://[^\s<>"\']+\.(?:jpg|jpeg|png|webp|heic|heif)', html_content, re.IGNORECASE)
-        if all_urls:
-            unique_imgs = list(dict.fromkeys(all_urls))[:20]  # Remove duplicates
+        for img in soup.find_all('img', src=True):
+            src = img['src']
+            if 'xhscdn' in src or 'xiaohongshu' in src:
+                all_images.append(src)
+        
+        # Lọc và làm sạch URLs
+        unique_images = []
+        for img in all_images:
+            clean = img.split('?')[0].split('#')[0]
+            if clean not in unique_images and 'xhscdn' in clean:
+                unique_images.append(clean)
+        
+        if unique_images:
+            title_elem = soup.find('title')
+            title = title_elem.text.strip() if title_elem else 'Xiaohongshu Images'
             return {
                 'type': 'image',
-                'media_urls': unique_imgs,
-                'title': soup.title.string.strip() if soup.title and soup.title.string else 'Xiaohongshu Images',
-                'count': len(unique_imgs)
+                'media_urls': unique_images[:30],  # Giới hạn số lượng
+                'title': title,
+                'count': len(unique_images[:30])
             }
         
         return {'error': 'Không tìm thấy media (video hoặc ảnh) trong trang.'}
     
     except requests.exceptions.RequestException as e:
-        return {'error': f'Lỗi kết nối: {str(e)[:100]}'}
+        return {'error': f'Lỗi kết nối: {str(e)}'}
     except Exception as e:
+        logger.exception(f"Lỗi fetch_from_web_page: {e}")
         return {'error': f'Lỗi xử lý: {str(e)[:100]}'}
 
 
 def extract_media_from_note(note):
     """
-    Extract media URLs từ note object của XHS API
+    Extract media URLs từ note object của XHS API.
+    CẬP NHẬT: Điều chỉnh theo cấu trúc dữ liệu API thực tế.
     """
     try:
-        # Thử lấy ảnh từ interact_interact
-        image_list = note.get('image_list', [])
-        if image_list:
-            images = []
-            for img in image_list:
-                img_url = img.get('url')
-                if img_url:
-                    images.append(img_url)
-            
-            if images:
-                return {
-                    'type': 'image',
-                    'media_urls': images,
-                    'title': note.get('title', 'Xiaohongshu Images'),
-                    'count': len(images)
-                }
+        images = []
         
-        # Thử lấy video
-        video = note.get('video')
-        if video:
-            video_url = video.get('url')
-            if video_url:
-                return {
-                    'type': 'video',
-                    'media_url': video_url,
-                    'view_url': video_url,
-                    'title': note.get('title', 'Xiaohongshu Video')
-                }
+        # Thử các đường dẫn dữ liệu có thể có
+        # 1. Từ image_list cũ
+        image_list = note.get('image_list', [])
+        # 2. Từ imageList mới
+        if not image_list:
+            image_list = note.get('imageList', [])
+        # 3. Từ note_detail -> imageList
+        if not image_list and 'note_detail' in note:
+            image_list = note['note_detail'].get('imageList', [])
+        
+        for img in image_list:
+            # Hỗ trợ nhiều format trả về
+            url = img.get('url') or img.get('original') or img.get('info', {}).get('url')
+            if url and isinstance(url, str):
+                # Đảm bảo URL đầy đủ
+                if url.startswith('//'):
+                    url = 'https:' + url
+                elif url.startswith('/'):
+                    url = 'https://www.xiaohongshu.com' + url
+                images.append(url)
+        
+        # Tìm video
+        video_info = note.get('video', {}) or note.get('video_info', {})
+        video_url = video_info.get('url') or video_info.get('video_url')
+        if video_url and isinstance(video_url, str):
+            if video_url.startswith('//'):
+                video_url = 'https:' + video_url
+            return {
+                'type': 'video',
+                'media_url': video_url,
+                'title': note.get('title', 'Xiaohongshu Video')
+            }
+        
+        if images:
+            return {
+                'type': 'image',
+                'media_urls': images,
+                'title': note.get('title', 'Xiaohongshu Images'),
+                'count': len(images)
+            }
         
         return {'error': 'Không tìm thấy media trong post.'}
+        
     except Exception as e:
+        logger.error(f"Lỗi extract_media_from_note: {e}")
         return {'error': f'Lỗi parse media: {e}'}
