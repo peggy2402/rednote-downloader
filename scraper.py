@@ -1,140 +1,142 @@
 import requests
 import re
 import json
+import logging
 import random
-import string
-import time
-from urllib.parse import urlparse, parse_qs, unquote
+from bs4 import BeautifulSoup
 
-# Giả lập iPhone (Mobile) - Dễ bypass hơn Desktop
-MOBILE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
-DESKTOP_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("XHS_Scraper")
 
-def get_random_id(length=32):
-    return ''.join(random.choices(string.hexdigits.lower(), k=length))
+class XHSScraper:
+    def __init__(self, cookies=None):
+        self.session = requests.Session()
+        self.cookie = cookies if cookies else ""
+        self.ua_desktop = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+        self.ua_mobile = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
 
-def resolve_short_link(url):
-    if "xhslink.com" in url:
+    def _get_headers(self, type="desktop"):
+        headers = {
+            "User-Agent": self.ua_mobile if type == "mobile" else self.ua_desktop,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+        if self.cookie: headers["Cookie"] = self.cookie
+        return headers
+
+    def resolve_redirects(self, url: str) -> str:
+        if "xhslink.com" not in url: return url
         try:
-            resp = requests.head(url, allow_redirects=True, timeout=5)
-            return resp.url
+            res = self.session.get(url, headers=self._get_headers("mobile"), allow_redirects=True, timeout=10)
+            return res.url
         except: return url
-    return url
 
-def get_headers(is_mobile=True, web_id=None, xsec_token=None):
-    """Tạo headers linh hoạt cho Mobile hoặc Desktop"""
-    cookies = {
-        "webId": web_id,
-        "a1": get_random_id(30),
-    }
-    if xsec_token: cookies["xsec_token"] = xsec_token
+    def extract_note_id(self, url: str) -> str:
+        patterns = [r'/explore/([a-fA-F0-9]{24})', r'/discovery/item/([a-fA-F0-9]{24})', r'item/([a-fA-F0-9]{24})']
+        for p in patterns:
+            match = re.search(p, url)
+            if match: return match.group(1)
+        return None
 
-    headers = {
-        "User-Agent": MOBILE_UA if is_mobile else DESKTOP_UA,
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-    }
-    return headers, cookies
+    def get_data(self, raw_url: str):
+        real_url = self.resolve_redirects(raw_url.strip())
+        note_id = self.extract_note_id(real_url)
+        if not note_id: return {"success": False, "message": f"Không tìm thấy ID. URL: {real_url}"}
 
-def extract_from_html(html):
-    """Hàm tách dữ liệu dùng chung cho cả JSON và Regex"""
-    result = None
-    
-    # 1. Thử lấy JSON __INITIAL_STATE__
-    data_match = re.search(r'window\.__INITIAL_STATE__\s*=\s*({.*?});', html, re.DOTALL)
-    if data_match:
+        # Strategy 1: XHS Lib
         try:
-            json_str = data_match.group(1).replace('undefined', 'null')
-            data = json.loads(json_str)
-            note_base = data.get('note', {})
-            note_data = note_base.get('noteDetailMap', {}).get(list(note_base.get('noteDetailMap', {}).keys())[0]) if note_base.get('noteDetailMap') else note_base.get('note')
-            
-            if note_data:
-                # Parse chuẩn từ JSON
-                res = {
-                    "title": note_data.get('title', 'No Title'),
-                    "author": note_data.get('user', {}).get('nickname', 'Unknown'),
-                    "avatar": note_data.get('user', {}).get('avatar', ''),
-                    "type": note_data.get('type', 'unknown'),
-                }
-                if res['type'] == 'video':
-                    res['download_url'] = note_data.get('video', {}).get('media', {}).get('stream', {}).get('h264', [{}])[0].get('masterUrl', '')
-                    res['cover'] = note_data.get('imageList', [{}])[0].get('urlDefault', '')
-                else:
-                    res['images'] = [
-                        img.get('infoList')[-1].get('url', img.get('urlDefault')) 
-                        for img in note_data.get('imageList', [])
-                        if img.get('urlDefault')
-                    ]
-                    res['cover'] = res['images'][0] if res['images'] else ''
-                return res
+            from xhs import XhsClient
+            if self.cookie:
+                client = XhsClient(cookie=self.cookie)
+                note = client.get_note_by_id(note_id)
+                if note: return self._format_response(note, "API Lib")
         except: pass
 
-    # 2. Fallback Regex (Quét thẻ Meta - Quan trọng cho Mobile)
-    print("Trying Regex Fallback...")
-    
-    # Tìm Title
-    title = re.search(r'<meta name="og:title" content="(.*?)">', html)
-    if not title: title = re.search(r'<title>(.*?)</title>', html)
-    
-    # Tìm Author (Mobile thường có json user ẩn)
-    author = re.search(r'"nickname":"(.*?)"', html)
-    avatar = re.search(r'"avatar":"(.*?)"', html)
+        # Strategy 2: HTML Desktop
+        try:
+            res = self.session.get(real_url, headers=self._get_headers("desktop"), timeout=10)
+            data = self._parse_html_soup(res.text)
+            if data: return data
+        except: pass
 
-    # Tìm Video
-    video_url = re.search(r'"masterUrl":"(http[^"]+?)"', html)
-    if not video_url: video_url = re.search(r'<meta name="og:video" content="(.*?)">', html)
-    
-    # Tìm Ảnh
-    img_matches = re.findall(r'"urlDefault":"(http[^"]+?)"', html)
-    if not img_matches: 
-        # Tìm trong thẻ meta og:image (thường chỉ lấy được 1 ảnh cover)
-        og_img = re.search(r'<meta name="og:image" content="(.*?)">', html)
-        if og_img: img_matches = [og_img.group(1)]
+        # Strategy 3: HTML Mobile
+        try:
+            res = self.session.get(real_url, headers=self._get_headers("mobile"), timeout=10)
+            data = self._parse_html_soup(res.text)
+            if data: return data
+        except: pass
 
-    if video_url or img_matches:
-        res = {
-            "title": title.group(1) if title else "Xiaohongshu Post",
-            "author": author.group(1) if author else "Xiaohongshu User",
-            "avatar": avatar.group(1) if avatar else "",
-            "type": "video" if video_url else "normal"
-        }
-        
-        if video_url:
-            res['download_url'] = video_url.group(1).replace(r'\u002F', '/')
-            res['cover'] = ""
+        return {"success": False, "message": "Không thể lấy dữ liệu (Captcha/Cookie Error)."}
+
+    def _parse_html_soup(self, html):
+        soup = BeautifulSoup(html, 'html.parser')
+        scripts = soup.find_all('script')
+        for script in scripts:
+            if script.string and '__INITIAL_STATE__' in script.string:
+                try:
+                    json_text = script.string
+                    start = json_text.find('{')
+                    end = json_text.rfind('}') + 1
+                    if start != -1:
+                        json_str = json_text[start:end].replace("undefined", "null")
+                        state = json.loads(json_str)
+                        note_map = state.get("note", {}).get("noteDetailMap", {})
+                        if note_map:
+                            first_key = next(iter(note_map))
+                            return self._format_response(note_map[first_key].get("note", {}), "HTML Soup")
+                except: pass
+        return None
+
+    def _format_response(self, note, source):
+        if not note: return None
+        title = note.get('title', 'No Title')
+        type_ = note.get('type', 'normal')
+        files = []
+
+        if type_ == 'video':
+            video_node = note.get('video', {})
+            url = video_node.get('media', {}).get('stream', {}).get('h264', [{}])[0].get('masterUrl')
+            if not url: url = video_node.get('masterUrl')
+            if not url: 
+                url = video_node.get('consumer', {}).get('originVideoKey')
+                if url and not url.startswith('http'): url = f"https://sns-video-bd.xhscdn.com/{url}"
+            
+            # FORCE HTTPS
+            if url and url.startswith('http:'): url = url.replace('http:', 'https:')
+            if url and url.startswith('//'): url = 'https:' + url
+
+            if url:
+                files.append({
+                    "type": "video", 
+                    "url": url, 
+                    "cover": note.get('imageList', [{}])[0].get('urlDefault', ''),
+                    "filename": f"{note.get('noteId')}.mp4"
+                })
         else:
-            res['images'] = list(set([img.replace(r'\u002F', '/') for img in img_matches]))
-            res['cover'] = res['images'][0]
-        return res
-        
-    return None
+            for idx, img in enumerate(note.get('imageList', [])):
+                url = img.get('urlOriginal') or img.get('urlDefault')
+                # FORCE HTTPS
+                if url and url.startswith('http:'): url = url.replace('http:', 'https:')
+                if url and url.startswith('//'): url = 'https:' + url
+                
+                if url:
+                    files.append({
+                        "type": "image", 
+                        "url": url, 
+                        "filename": f"{note.get('noteId')}_{idx}.jpg"
+                    })
 
-def parse_rednote_url(input_url):
-    try:
-        real_url = resolve_short_link(input_url)
-        parsed = urlparse(real_url)
-        xsec_token = parse_qs(parsed.query).get('xsec_token', [None])[0]
-        web_id = get_random_id()
-        
-        # --- CHIẾN LƯỢC 1: MOBILE (Ưu tiên) ---
-        print("Attempt 1: Mobile User-Agent...")
-        headers_mob, cookies_mob = get_headers(is_mobile=True, web_id=web_id, xsec_token=xsec_token)
-        session = requests.Session()
-        resp_mob = session.get(real_url, headers=headers_mob, cookies=cookies_mob, timeout=10)
-        
-        result = extract_from_html(resp_mob.text)
-        if result: return result
+        return {
+            "success": True,
+            "data": {
+                "id": note.get('noteId'),
+                "title": title,
+                "author": {"name": note.get('user', {}).get('nickname'), "avatar": note.get('user', {}).get('avatar')},
+                "files": files,
+                "total": len(files),
+                "source": source
+            }
+        }
 
-        # --- CHIẾN LƯỢC 2: DESKTOP (Fallback) ---
-        print("Attempt 2: Desktop User-Agent...")
-        headers_desk, cookies_desk = get_headers(is_mobile=False, web_id=web_id, xsec_token=xsec_token)
-        resp_desk = session.get(real_url, headers=headers_desk, cookies=cookies_desk, timeout=10)
-        
-        result = extract_from_html(resp_desk.text)
-        if result: return result
-
-        return {"error": "Không thể lấy dữ liệu (Captcha quá mạnh). Vui lòng thử lại sau vài phút."}
-
-    except Exception as e:
-        return {"error": f"System Error: {str(e)}"}
+def scrape_xhs(url, cookies=None):
+    return XHSScraper(cookies).get_data(url)

@@ -4,42 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RedNote Downloader</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- QUAN TRỌNG: Dòng này giúp vượt qua cơ chế chặn ảnh của Xiaohongshu -->
+    <meta name="referrer" content="no-referrer" />
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Load CSS tĩnh -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    
+    <style>
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
-<body>
-    <div class="glass-container">
-        <header>
-            <div class="logo">
-                <i class="fab fa-zhihu"></i>
-                <h1>RedNote</h1>
-            </div>
-            <p class="subtitle">Tải Video/Ảnh Xiaohongshu không Logo</p>
-        </header>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
-        <div class="input-section">
-            <div class="input-wrapper">
-                <input type="text" id="urlInput" placeholder="Dán link bài viết...">
-                <div class="paste-btn" onclick="pasteClipboard()"><i class="fas fa-paste"></i></div>
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2 text-red-500 font-bold text-xl">
+                <i class="fa-solid fa-cloud-arrow-down"></i> RedNote Saver
             </div>
-            <button id="downloadBtn" onclick="handleDownload()">
-                <span class="btn-text">Lấy Link Tải</span>
-                <i class="fas fa-arrow-right"></i>
+            <div id="device-indicator" class="text-xs px-3 py-1 rounded-full bg-gray-100 font-semibold text-gray-500">
+                Loading...
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-4xl mx-auto w-full px-4 py-8 space-y-6">
+        
+        <section class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h2 class="text-lg font-bold mb-3 text-gray-700">Dán Link Xiaohongshu</h2>
+            <div class="relative">
+                <textarea id="url-input" rows="3" 
+                    class="w-full p-4 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-red-500 focus:outline-none transition text-sm"
+                    placeholder="Dán mỗi link 1 dòng, tối thiểu 1 link"></textarea>
+                <div class="absolute bottom-3 right-3 text-gray-400 text-xs">
+                    <i class="fa-solid fa-paste cursor-pointer hover:text-red-500" onclick="navigator.clipboard.readText().then(t => document.getElementById('url-input').value = t)"> Paste</i>
+                </div>
+            </div>
+            
+            <button id="analyze-btn" class="mt-4 w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition shadow-md flex justify-center items-center gap-2">
+                <i class="fa-solid fa-magnifying-glass"></i> Phân Tích & Tải Xuống
+            </button>
+        </section>
+
+        <div id="loading" class="hidden flex flex-col items-center py-8">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-red-500 mb-2"></div>
+            <p class="text-sm text-gray-500">Đang lấy dữ liệu...</p>
+        </div>
+
+        <!-- Khu vực hiển thị kết quả -->
+        <div id="results-area" class="space-y-6 hidden pb-20">
+            <!-- JS sẽ render HTML vào đây -->
+        </div>
+
+    </main>
+
+    <div id="action-bar" class="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-40 hidden transition-transform translate-y-full">
+        <div class="max-w-4xl mx-auto flex gap-3">
+            <button id="btn-download-zip" class="hidden flex-1 bg-slate-800 text-white py-3 rounded-xl font-bold shadow-lg active:scale-95 transition">
+                <i class="fa-solid fa-file-zipper"></i> Tải ZIP (PC)
+            </button>
+            <button id="btn-download-mobile" class="hidden flex-1 bg-red-500 text-white py-3 rounded-xl font-bold shadow-lg active:scale-95 transition">
+                <i class="fa-solid fa-images"></i> Tải Tất Cả (Mobile)
             </button>
         </div>
-
-        <div id="loading" class="loading hidden">
-            <div class="spinner"></div>
-            <p>Đang phân tích...</p>
-        </div>
-
-        <div id="error-msg" class="message error hidden">
-            <i class="fas fa-exclamation-circle"></i> <span></span>
-        </div>
-
-        <div id="result" class="hidden"></div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- Load Script -->
+    <script src="/static/js/main.js"></script>
 </body>
 </html>
