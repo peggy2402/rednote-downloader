@@ -17,66 +17,88 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnMobile) btnMobile.addEventListener('click', downloadMobileAll);
 });
 
-// --- 1. GLOBAL HELPER FUNCTIONS (QUAN TRỌNG: Phải nằm ở Window Scope) ---
+// --- 1. HÀM ALERT ĐẸP (TOAST NOTIFICATION) ---
+window.showToast = function(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
 
-// Hàm cuộn sang trái/phải (Nút mũi tên)
+    // Cấu hình màu sắc và icon dựa trên loại thông báo
+    const config = {
+        success: { bg: 'bg-green-500', icon: '<i class="fa-solid fa-check-circle"></i>', border: 'border-green-600' },
+        error: { bg: 'bg-red-500', icon: '<i class="fa-solid fa-circle-exclamation"></i>', border: 'border-red-600' },
+        info: { bg: 'bg-blue-500', icon: '<i class="fa-solid fa-circle-info"></i>', border: 'border-blue-600' },
+        warning: { bg: 'bg-yellow-500', icon: '<i class="fa-solid fa-triangle-exclamation"></i>', border: 'border-yellow-600' }
+    };
+
+    const style = config[type] || config.info;
+
+    // Tạo phần tử Toast HTML
+    const toast = document.createElement('div');
+    toast.className = `toast-enter pointer-events-auto flex items-center w-full p-4 text-white rounded-xl shadow-2xl ${style.bg} border-b-4 ${style.border} relative overflow-hidden group`;
+    
+    toast.innerHTML = `
+        <div class="flex-shrink-0 text-xl opacity-90">
+            ${style.icon}
+        </div>
+        <div class="ml-3 font-medium text-sm pr-6 leading-tight">
+            ${message}
+        </div>
+        <button onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-white/60 hover:text-white transition p-1">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <!-- Thanh thời gian tự chạy -->
+        <div class="absolute bottom-0 left-0 h-1 bg-white/30 animate-[width_3s_linear_forwards]" style="width: 100%"></div>
+    `;
+
+    container.appendChild(toast);
+
+    // Tự động xóa sau 3.5 giây
+    setTimeout(() => {
+        toast.classList.remove('toast-enter');
+        toast.classList.add('toast-exit');
+        toast.addEventListener('animationend', () => {
+            if (toast.parentElement) toast.remove();
+        });
+    }, 3500);
+};
+
+// --- 2. GLOBAL HELPER FUNCTIONS ---
+
 window.scrollGallery = function(galleryId, direction) {
     const gallery = document.getElementById(galleryId);
     if (!gallery) return;
-
     const item = gallery.querySelector('div'); 
     if (!item) return;
-    
-    // Width của item + Gap (16px)
     const scrollAmount = (item.offsetWidth + 16) * direction;
-    
-    gallery.scrollBy({
-        left: scrollAmount,
-        behavior: 'smooth'
-    });
+    gallery.scrollBy({ left: scrollAmount, behavior: 'smooth' });
 };
 
-// Hàm nhảy đến vị trí cụ thể (Click Dot)
 window.scrollToIndex = function(galleryId, index) {
     const gallery = document.getElementById(galleryId);
     if (!gallery) return;
-    
     const item = gallery.querySelector('div');
     if (!item) return;
-    
     const scrollPos = index * (item.offsetWidth + 16);
-    
-    gallery.scrollTo({
-        left: scrollPos,
-        behavior: 'smooth'
-    });
+    gallery.scrollTo({ left: scrollPos, behavior: 'smooth' });
 };
 
-// Hàm cập nhật chấm tròn khi lướt
 window.updateActiveDot = function(galleryId, dotsId) {
     const gallery = document.getElementById(galleryId);
     const dotsContainer = document.getElementById(dotsId);
     if (!gallery || !dotsContainer) return;
-
     const item = gallery.querySelector('div');
     if (!item) return;
-
     const itemWidth = item.offsetWidth + 16;
     const scrollLeft = gallery.scrollLeft;
-    
     const activeIndex = Math.round(scrollLeft / itemWidth);
-
     const dots = dotsContainer.children;
     for (let i = 0; i < dots.length; i++) {
-        if (i === activeIndex) {
-            dots[i].classList.add('active');
-        } else {
-            dots[i].classList.remove('active');
-        }
+        if (i === activeIndex) dots[i].classList.add('active');
+        else dots[i].classList.remove('active');
     }
 };
 
-// --- 2. LOGIC CHÍNH ---
+// --- 3. LOGIC CHÍNH ---
 
 function detectDevice() {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
@@ -101,7 +123,10 @@ function detectDevice() {
 
 async function analyzeUrls() {
     const input = document.getElementById('url-input').value;
-    if (!input.trim()) return alert("Vui lòng nhập link!");
+    if (!input.trim()) {
+        showToast("Vui lòng dán link Xiaohongshu!", "warning");
+        return;
+    }
 
     collectedFiles = [];
     const resultsArea = document.getElementById('results-area');
@@ -124,16 +149,25 @@ async function analyzeUrls() {
 
         if (resData.success) {
             renderResults(resData.data);
+            showToast(`Đã tìm thấy ${resData.data.length} bài viết!`, "success");
+            
+            if(resData.debug_errors && resData.debug_errors.length > 0) {
+                // Nếu có 1 số link lỗi nhưng vẫn có kết quả trả về
+                setTimeout(() => {
+                    showToast(`Có ${resData.debug_errors.length} link không tải được.`, "warning");
+                }, 1000);
+            }
+
             if(actionBar) {
                 actionBar.classList.remove('hidden');
                 setTimeout(() => actionBar.classList.remove('translate-y-full', 'translate-y-0'), 100);
             }
         } else {
-            alert("Lỗi: " + (resData.message || "Không xác định"));
+            showToast("Lỗi: " + (resData.message || "Không xác định"), "error");
         }
     } catch (error) {
         console.error(error);
-        alert("Lỗi kết nối server: " + error.message);
+        showToast("Lỗi kết nối Server!", "error");
     } finally {
         loader.classList.add('hidden');
     }
@@ -167,14 +201,11 @@ function renderResults(posts) {
 
                 <!-- Carousel Wrapper -->
                 <div class="relative bg-gray-50 group/slider pt-4">
-                    
-                    <!-- Prev Button -->
                     <button class="nav-btn absolute left-2 top-1/2 z-20 bg-white/90 hover:bg-red-500 hover:text-white text-gray-700 w-10 h-10 rounded-full shadow-lg flex items-center justify-center backdrop-blur-sm cursor-pointer transition-transform active:scale-95"
                         onclick="window.scrollGallery('${galleryId}', -1)">
                         <i class="fa-solid fa-chevron-left"></i>
                     </button>
 
-                    <!-- Scroll Area -->
                     <div id="${galleryId}" class="xhs-gallery-scroll flex overflow-x-auto snap-x snap-mandatory scroll-smooth p-4 gap-4 scrollbar-hide cursor-grab active:cursor-grabbing items-center"
                          onscroll="window.updateActiveDot('${galleryId}', '${dotsId}')">
                         ${post.files.map((file, index) => `
@@ -185,15 +216,12 @@ function renderResults(posts) {
                                        </video>`
                                     : `<img src="${file.url}" draggable="false" referrerpolicy="no-referrer" class="w-full h-full object-cover pointer-events-none">`
                                 }
-                                
                                 <div class="absolute inset-0 bg-black/0 group-hover/item:bg-black/10 transition-colors pointer-events-none"></div>
-                                
                                 <a href="${file.url}" download="${file.filename}" target="_blank" 
                                    class="absolute top-3 right-3 bg-white/90 hover:bg-red-500 hover:text-white text-gray-700 w-9 h-9 flex items-center justify-center rounded-full shadow-md backdrop-blur-md transition-all opacity-0 group-hover/item:opacity-100 translate-y-2 group-hover/item:translate-y-0 z-10 cursor-pointer"
                                    title="Tải về">
                                     <i class="fa-solid fa-download"></i>
                                 </a>
-                                
                                 <div class="absolute bottom-3 left-3 bg-black/60 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm pointer-events-none">
                                     ${index + 1} / ${post.total}
                                 </div>
@@ -201,14 +229,12 @@ function renderResults(posts) {
                         `).join('')}
                     </div>
 
-                    <!-- Next Button -->
                     <button class="nav-btn absolute right-2 top-1/2 z-20 bg-white/90 hover:bg-red-500 hover:text-white text-gray-700 w-10 h-10 rounded-full shadow-lg flex items-center justify-center backdrop-blur-sm cursor-pointer transition-transform active:scale-95"
                         onclick="window.scrollGallery('${galleryId}', 1)">
                         <i class="fa-solid fa-chevron-right"></i>
                     </button>
                 </div>
 
-                <!-- Dots Container -->
                 <div id="${dotsId}" class="dots-container">
                     ${post.files.map((_, index) => `
                         <div class="dot ${index === 0 ? 'active' : ''}" onclick="window.scrollToIndex('${galleryId}', ${index})"></div>
@@ -223,15 +249,12 @@ function renderResults(posts) {
     container.classList.remove('hidden');
 }
 
-// 4. Drag & Scroll Logic
 function attachDragAndScroll() {
     const galleries = document.querySelectorAll('.xhs-gallery-scroll');
-    
     galleries.forEach(slider => {
         let isDown = false;
         let startX;
         let scrollLeft;
-
         slider.addEventListener('mousedown', (e) => {
             isDown = true;
             slider.style.cursor = 'grabbing';
@@ -241,7 +264,6 @@ function attachDragAndScroll() {
             scrollLeft = slider.scrollLeft;
             e.preventDefault(); 
         });
-
         const stopDrag = () => {
             if (!isDown) return;
             isDown = false;
@@ -249,10 +271,8 @@ function attachDragAndScroll() {
             slider.style.scrollBehavior = 'smooth';
             slider.style.scrollSnapType = 'x mandatory'; 
         };
-
         slider.addEventListener('mouseleave', stopDrag);
         slider.addEventListener('mouseup', stopDrag);
-
         slider.addEventListener('mousemove', (e) => {
             if (!isDown) return;
             e.preventDefault();
@@ -260,7 +280,6 @@ function attachDragAndScroll() {
             const walk = (x - startX) * 2; 
             slider.scrollLeft = scrollLeft - walk;
         });
-        
         slider.addEventListener('wheel', (evt) => {
             if (evt.deltaY !== 0) {
                 evt.preventDefault();
@@ -289,16 +308,17 @@ async function downloadZip() {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `RedNote_Full_${new Date().getTime()}.zip`;
+            a.download = `XHS_Chien_Full_${new Date().getTime()}.zip`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
+            showToast("Đã tạo file ZIP thành công!", "success");
         } else {
-            alert("Lỗi khi tạo ZIP (Có thể file quá lớn).");
+            showToast("Lỗi khi tạo file ZIP (File quá lớn?).", "error");
         }
     } catch (e) {
         console.error(e);
-        alert("Lỗi tải xuống.");
+        showToast("Lỗi kết nối khi tải xuống.", "error");
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -315,7 +335,9 @@ async function downloadMobileAll() {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     
     if (isIOS) {
-        alert("LƯU Ý IOS: Hệ thống sẽ tải lần lượt. Vui lòng nhấn 'Tải về' trên popup.");
+        showToast("iOS: Vui lòng xác nhận từng popup tải về!", "info");
+    } else {
+        showToast("Đang bắt đầu tải xuống hàng loạt...", "info");
     }
 
     for (let i = 0; i < collectedFiles.length; i++) {
@@ -337,6 +359,8 @@ async function downloadMobileAll() {
     }
 
     btn.innerHTML = '<i class="fa-solid fa-check"></i> Hoàn tất';
+    showToast("Đã hoàn tất quá trình tải xuống!", "success");
+    
     setTimeout(() => {
         btn.innerHTML = '<i class="fa-solid fa-images"></i> Tải Tất Cả (Mobile)';
         btn.disabled = false;

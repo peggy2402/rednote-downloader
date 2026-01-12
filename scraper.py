@@ -2,120 +2,111 @@ import requests
 import re
 import json
 import logging
+import time
 from bs4 import BeautifulSoup
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("XHS_Scraper")
 
-# HÀM MỚI: Trích xuất URL từ văn bản bất kỳ
 def extract_urls_from_text(text):
     """
-    Tìm tất cả các link http/https trong văn bản.
-    Xử lý cả trường hợp link bị dính liền với chữ (ví dụ: texthttp://...)
+    Tìm link http/https trong văn bản hỗn độn.
+    Lọc bỏ các ký tự dính đuôi như dấu chấm, dấu phẩy, ngoặc...
     """
-    # Regex tìm pattern bắt đầu bằng http:// hoặc https://
-    # Dừng lại khi gặp khoảng trắng hoặc các ký tự không phải URL
-    url_pattern = r'(https?://[^\s]+)'
-    found_urls = re.findall(url_pattern, text)
-    
+    raw_urls = re.findall(r'(https?://[^\s]+)', text)
     clean_urls = []
-    for url in found_urls:
-        # Lọc sơ bộ, chỉ lấy link liên quan xiaohongshu hoặc xhslink
+    for url in raw_urls:
+        url = url.rstrip('.,;)]}”"\'')
         if 'xiaohongshu.com' in url or 'xhslink.com' in url:
             clean_urls.append(url.strip())
-            
-    return list(set(clean_urls)) # Loại bỏ trùng lặp
+    return list(set(clean_urls))
 
 class XHSScraper:
     def __init__(self, cookies=None):
         self.session = requests.Session()
         self.cookie = cookies if cookies else ""
-        self.ua_desktop = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
-        self.ua_mobile = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
+        self.ua_desktop = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        # User-Agent Mobile mới nhất
+        self.ua_mobile = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"
 
     def _get_headers(self, type="desktop"):
         headers = {
             "User-Agent": self.ua_mobile if type == "mobile" else self.ua_desktop,
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.9",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Upgrade-Insecure-Requests": "1"
         }
         if self.cookie: headers["Cookie"] = self.cookie
         return headers
 
     def resolve_redirects(self, url: str) -> str:
-        """
-        Xử lý link rút gọn xhslink.com
-        """
-        if "xhslink.com" in url:
-            try:
-                # Phải chặn redirect tự động để lấy header Location chính xác hoặc để requests tự xử lý chuỗi redirect
-                res = self.session.get(url, headers=self._get_headers("mobile"), allow_redirects=True, timeout=10)
-                # Link thật thường nằm ở res.url sau khi redirect xong
-                return res.url
-            except Exception as e:
-                logger.error(f"Error resolving redirect: {e}")
-                return url
-        return url
+        if "xhslink" not in url: return url
+        logger.info(f"Resolving short link: {url}")
+        try:
+            res = self.session.get(url, headers=self._get_headers("mobile"), allow_redirects=False, timeout=10)
+            if res.status_code in [301, 302, 307, 308]:
+                location = res.headers.get('Location')
+                if location: return location
+            res = self.session.get(url, headers=self._get_headers("mobile"), allow_redirects=True, timeout=15)
+            return res.url
+        except Exception as e:
+            logger.error(f"Redirect error: {e}")
+            return url
 
     def extract_note_id(self, url: str) -> str:
-        # Làm sạch URL, bỏ các tham số query (?...) để tránh nhiễu
         clean_url = url.split('?')[0]
+        patterns = [r'/explore/([a-fA-F0-9]{24})', r'/discovery/item/([a-fA-F0-9]{24})', r'item/([a-fA-F0-9]{24})']
         
-        patterns = [
-            r'/explore/([a-fA-F0-9]{24})', 
-            r'/discovery/item/([a-fA-F0-9]{24})', 
-            r'item/([a-fA-F0-9]{24})'
-        ]
         for p in patterns:
             match = re.search(p, clean_url)
             if match: return match.group(1)
-            
-        # Fallback: Thử tìm trong toàn bộ URL gốc nếu clean_url thất bại
-        for p in patterns:
+        for p in patterns: 
             match = re.search(p, url)
             if match: return match.group(1)
-            
         return None
 
     def get_data(self, raw_url: str):
-        # Bước 1: Giải mã link rút gọn
         real_url = self.resolve_redirects(raw_url.strip())
-        logger.info(f"Processing Real URL: {real_url}")
-        
-        # Bước 2: Lấy Note ID
+        if "xhslink" in real_url:
+             try:
+                res = self.session.get(raw_url, headers=self._get_headers("desktop"), allow_redirects=True, timeout=10)
+                real_url = res.url
+             except: pass
+
         note_id = self.extract_note_id(real_url)
         if not note_id: 
-            return {"success": False, "message": f"Không tìm thấy ID bài viết. Link gốc: {raw_url}"}
+            return {"success": False, "message": f"Không tìm thấy ID. URL: {real_url}"}
 
-        logger.info(f"Found Note ID: {note_id}")
-
-        # Chiến thuật 1: Sử dụng HTML Mobile (Thường ổn định nhất nếu không có API Key xịn)
-        try:
-            res = self.session.get(real_url, headers=self._get_headers("mobile"), timeout=10)
-            data = self._parse_html_soup(res.text)
-            if data: return data
-        except Exception as e:
-            logger.warning(f"Strategy Mobile failed: {e}")
-
-        # Chiến thuật 2: Sử dụng thư viện xhs (Nếu có cookie xịn)
+        # 1. API Lib (Ưu tiên 1)
         try:
             from xhs import XhsClient
             if self.cookie:
+                logger.info("Attempting Strategy: API Lib")
                 client = XhsClient(cookie=self.cookie)
                 note = client.get_note_by_id(note_id)
                 if note: return self._format_response(note, "API Lib")
-        except Exception as e:
-             logger.warning(f"Strategy Lib failed: {e}")
+        except Exception as e: 
+            logger.warning(f"Strategy API Lib failed: {e}")
 
-        # Chiến thuật 3: HTML Desktop
+        # 2. HTML Mobile (Ưu tiên 2)
         try:
+            logger.info("Attempting Strategy: HTML Mobile")
+            res = self.session.get(real_url, headers=self._get_headers("mobile"), timeout=10)
+            data = self._parse_html_soup(res.text)
+            if data: return data
+        except Exception as e: logger.error(f"Mobile failed: {e}")
+
+        # 3. HTML Desktop (Fallback)
+        try:
+            logger.info("Attempting Strategy: HTML Desktop")
             res = self.session.get(real_url, headers=self._get_headers("desktop"), timeout=10)
             data = self._parse_html_soup(res.text)
             if data: return data
-        except Exception as e:
-             logger.warning(f"Strategy Desktop failed: {e}")
-
-        return {"success": False, "message": "Cần cập nhật Cookie mới để tải bài này."}
+        except Exception as e: logger.error(f"Desktop failed: {e}")
+             
+        return {"success": False, "message": "Không thể lấy dữ liệu. Hãy cập nhật Cookie mới!"}
 
     def _parse_html_soup(self, html):
         soup = BeautifulSoup(html, 'html.parser')
@@ -129,89 +120,80 @@ class XHSScraper:
                     if start != -1:
                         json_str = json_text[start:end].replace("undefined", "null")
                         state = json.loads(json_str)
-                        
-                        # Cấu trúc JSON của XHS thay đổi tùy lúc, cần traverse cẩn thận
                         note_data = state.get("note", {}).get("noteDetailMap", {})
-                        if not note_data:
-                            # Thử cấu trúc khác nếu có
-                            note_data = state.get("note", {}).get("note", {})
-                            
+                        target_note = None
                         if note_data:
-                            # noteDetailMap thường lưu dạng { "noteId": { ...data... } }
-                            # Lấy value đầu tiên trong map
-                            first_value = next(iter(note_data.values())) if isinstance(note_data, dict) else note_data
-                            
-                            # Có thể lồng nhau thêm 1 lớp nữa
-                            final_note = first_value.get("note", first_value)
-                            
-                            return self._format_response(final_note, "HTML Soup")
-                except Exception as e:
-                    logger.error(f"Error parsing soup: {e}")
-                    pass
+                            first_val = next(iter(note_data.values()))
+                            target_note = first_val.get("note", first_val)
+                        else:
+                            target_note = state.get("note", {}).get("note", {})
+
+                        if target_note and target_note.get("noteId"):
+                            return self._format_response(target_note, "HTML Soup")
+                except: pass
         return None
 
     def _format_response(self, note, source):
         if not note: return None
         title = note.get('title', 'No Title')
         type_ = note.get('type', 'normal')
-        note_id = note.get('noteId', 'unknown')
+        note_id = note.get('noteId')
         files = []
 
-        # Logic lấy Video
+        # --- LOGIC VIDEO NO WATERMARK (CẬP NHẬT MẠNH) ---
         if type_ == 'video':
             video_node = note.get('video', {})
-            # Thử lấy nhiều nguồn url khác nhau
             url = None
-            
-            # Ưu tiên h264 master
-            media = video_node.get('media', {})
-            stream = media.get('stream', {})
-            h264 = stream.get('h264', [])
-            if h264 and len(h264) > 0:
-                url = h264[0].get('masterUrl')
-                
-            if not url: url = video_node.get('masterUrl')
-            
-            # Xử lý trường hợp consumer key
-            if not url: 
-                origin_key = video_node.get('consumer', {}).get('originVideoKey')
-                if origin_key:
-                    url = f"https://sns-video-bd.xhscdn.com/{origin_key}"
-            
-            # FORCE HTTPS
-            if url:
-                if url.startswith('http:'): url = url.replace('http:', 'https:')
-                if url.startswith('//'): url = 'https:' + url
-                
-                cover_url = note.get('imageList', [{}])[0].get('urlDefault', '')
-                if cover_url.startswith('//'): cover_url = 'https:' + cover_url
 
-                files.append({
+            # CHIẾN THUẬT 1: Lấy originVideoKey (Chuẩn nhất - Không logo)
+            origin_key = video_node.get('consumer', {}).get('originVideoKey')
+            if origin_key:
+                url = f"https://sns-video-bd.xhscdn.com/{origin_key}"
+                logger.info(f"Got Video via OriginKey: {origin_key}")
+
+            # CHIẾN THUẬT 2: Fallback an toàn
+            # Nếu không có originKey, ta dùng masterUrl GỐC.
+            # TUYỆT ĐỐI KHÔNG cắt gọt tham số (?sign=...) vì sẽ làm hỏng link.
+            if not url:
+                master_url = video_node.get('masterUrl')
+                # Nếu masterUrl rỗng, tìm trong h264
+                if not master_url:
+                    media = video_node.get('media', {})
+                    stream = media.get('stream', {})
+                    if stream.get('h264'):
+                        master_url = stream['h264'][0].get('masterUrl')
+                
+                # Sử dụng link gốc để đảm bảo chạy được (dù có thể có watermark)
+                url = master_url
+                logger.info(f"Got Video via MasterURL Fallback: {url}")
+
+            if url:
+                 files.append({
                     "type": "video", 
-                    "url": url, 
-                    "cover": cover_url,
-                    "filename": f"RedNote_{note_id}.mp4"
+                    "url": self._force_https(url), 
+                    "cover": self._force_https(note.get('imageList', [{}])[0].get('urlDefault', '')),
+                    "filename": f"RedNoteVid_{note_id}.mp4"
                 })
         
-        # Logic lấy Ảnh
+        # --- LOGIC ẢNH NO WATERMARK ---
         else:
-            img_list = note.get('imageList', [])
-            for idx, img in enumerate(img_list):
-                # Ưu tiên ảnh gốc
-                url = img.get('urlOriginal') or img.get('urlDefault')
-                if not url: 
-                    # Fallback pattern
-                    trace_id = img.get('traceId')
-                    if trace_id: url = f"https://sns-img-bd.xhscdn.com/{trace_id}"
+            for idx, img in enumerate(note.get('imageList', [])):
+                url = None
+                
+                # 1. Thử lấy traceId (No Watermark)
+                trace_id = img.get('traceId') or img.get('fileId')
+                if trace_id:
+                    url = f"https://sns-img-bd.xhscdn.com/{trace_id}"
+                
+                # 2. Fallback
+                if not url: url = img.get('urlOriginal')
+                if not url: url = img.get('urlDefault')
 
                 if url:
-                    if url.startswith('http:'): url = url.replace('http:', 'https:')
-                    if url.startswith('//'): url = 'https:' + url
-                    
                     files.append({
                         "type": "image", 
-                        "url": url, 
-                        "filename": f"RedNote_{note_id}_{idx+1}.jpg"
+                        "url": self._force_https(url), 
+                        "filename": f"RedNoteImg_{note_id}_{idx+1}.jpg"
                     })
 
         return {
@@ -221,7 +203,7 @@ class XHSScraper:
                 "title": title,
                 "author": {
                     "name": note.get('user', {}).get('nickname', 'Unknown'), 
-                    "avatar": note.get('user', {}).get('avatar', '')
+                    "avatar": self._force_https(note.get('user', {}).get('avatar', ''))
                 },
                 "files": files,
                 "total": len(files),
@@ -229,6 +211,11 @@ class XHSScraper:
             }
         }
 
+    def _force_https(self, url):
+        if not url: return ""
+        if url.startswith("//"): return "https:" + url
+        if url.startswith("http:"): return url.replace("http:", "https:")
+        return url
+
 def scrape_xhs(url, cookies=None):
     return XHSScraper(cookies).get_data(url)
-

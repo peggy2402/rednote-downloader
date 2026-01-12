@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RedNote Downloader</title>
+    <title>RedNote Saver - Tải Video Xiaohongshu Không Logo</title>
     
-    <!-- QUAN TRỌNG: Dòng này giúp vượt qua cơ chế chặn ảnh của Xiaohongshu -->
     <meta name="referrer" content="no-referrer" />
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Load CSS tĩnh -->
+    <link rel="shortcut icon" href="/static/images/logo32.png" type="image/x-icon">
     <link rel="stylesheet" href="/static/css/style.css">
     
     <style>
@@ -19,7 +17,10 @@
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col relative">
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-3 w-full max-w-xs pointer-events-none"></div>
 
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
@@ -32,43 +33,92 @@
         </div>
     </header>
 
-    <main class="flex-grow max-w-4xl mx-auto w-full px-4 py-8 space-y-6">
+    <main class="flex-grow max-w-4xl mx-auto w-full px-4 py-6 space-y-6">
         
+        <!-- HƯỚNG DẪN SỬ DỤNG -->
+        <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 md:p-5 shadow-sm">
+            <h3 class="font-bold text-blue-800 mb-3 flex items-center gap-2">
+                <i class="fa-regular fa-lightbulb"></i> Hướng Dẫn Nhanh
+            </h3>
+            <ul class="space-y-2 text-sm text-blue-900/80">
+                <li class="flex items-start gap-2">
+                    <span class="bg-blue-200 text-blue-800 font-bold text-xs w-5 h-5 flex items-center justify-center rounded-full mt-0.5">1</span>
+                    <span>Mở app Xiaohongshu, bấm nút <strong>Chia sẻ (Share)</strong> <i class="fa-solid fa-share-nodes"></i> &rarr; chọn <strong>Sao chép liên kết (Copy Link)</strong>.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="bg-blue-200 text-blue-800 font-bold text-xs w-5 h-5 flex items-center justify-center rounded-full mt-0.5">2</span>
+                    <span>Dán toàn bộ nội dung vào ô bên dưới (Không cần xóa chữ tiếng Trung, hệ thống tự lọc link).</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="bg-blue-200 text-blue-800 font-bold text-xs w-5 h-5 flex items-center justify-center rounded-full mt-0.5">3</span>
+                    <span>Bấm <strong>Phân Tích</strong> và chọn tải về.</span>
+                </li>
+            </ul>
+        </div>
+
         <section class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h2 class="text-lg font-bold mb-3 text-gray-700">Dán Link Xiaohongshu</h2>
-            <div class="relative">
-                <textarea id="url-input" rows="3" 
-                    class="w-full p-4 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-red-500 focus:outline-none transition text-sm"
-                    placeholder="Dán mỗi link 1 dòng, tối thiểu 1 link"></textarea>
-                <div class="absolute bottom-3 right-3 text-gray-400 text-xs">
-                    <i class="fa-solid fa-paste cursor-pointer hover:text-red-500" onclick="navigator.clipboard.readText().then(t => document.getElementById('url-input').value = t)"> Paste</i>
+            <h2 class="text-lg font-bold mb-3 text-gray-700 flex items-center gap-2">
+                <i class="fa-solid fa-link"></i> Dán Link Bài Viết
+            </h2>
+            <div class="relative group">
+                <textarea id="url-input" rows="4" 
+                    class="w-full p-4 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-red-500 focus:outline-none transition text-sm leading-relaxed pr-24"
+                    placeholder="Ví dụ: 94 0.35 复制打开抖音... http://xhslink.com/o/1tijcwTw0NS..."></textarea>
+                
+                <div class="absolute bottom-3 right-3 flex gap-2">
+                    <!-- Nút Xóa (MỚI) -->
+                     <button onclick="document.getElementById('url-input').value = ''; document.getElementById('url-input').focus(); showToast('Đã xóa nội dung!', 'info')" 
+                        class="text-xs bg-white border border-gray-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200 text-gray-500 px-3 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1"
+                        title="Xóa nội dung">
+                        <i class="fa-solid fa-trash-can"></i> Xóa
+                     </button>
+
+                     <!-- Nút Dán -->
+                     <button onclick="navigator.clipboard.readText().then(t => { document.getElementById('url-input').value = t; showToast('Đã dán nội dung từ Clipboard', 'success'); }).catch(() => showToast('Không thể truy cập Clipboard', 'error'))" 
+                        class="text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 px-3 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1">
+                        <i class="fa-solid fa-paste"></i> Dán nhanh
+                     </button>
                 </div>
             </div>
             
-            <button id="analyze-btn" class="mt-4 w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition shadow-md flex justify-center items-center gap-2">
+            <button id="analyze-btn" class="mt-4 w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 rounded-xl transition shadow-md shadow-red-200 flex justify-center items-center gap-2 active:scale-[0.98]">
                 <i class="fa-solid fa-magnifying-glass"></i> Phân Tích & Tải Xuống
             </button>
         </section>
 
         <div id="loading" class="hidden flex flex-col items-center py-8">
             <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-red-500 mb-2"></div>
-            <p class="text-sm text-gray-500">Đang lấy dữ liệu...</p>
+            <p class="text-sm text-gray-500 animate-pulse">Đang xử lý dữ liệu từ Xiaohongshu...</p>
         </div>
 
         <!-- Khu vực hiển thị kết quả -->
-        <div id="results-area" class="space-y-6 hidden pb-20">
+        <div id="results-area" class="space-y-6 hidden pb-24">
             <!-- JS sẽ render HTML vào đây -->
         </div>
 
     </main>
 
-    <div id="action-bar" class="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-40 hidden transition-transform translate-y-full">
+    <!-- FOOTER (MỚI) -->
+    <footer class="bg-white border-t border-gray-100 py-6 mt-auto">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <p class="text-sm text-gray-500">
+                &copy; 2026 <strong>RedNote Saver</strong>. Developed by <span class="font-semibold text-gray-700">Tran Van Chien</span>. All rights reserved.
+            </p>
+            <div class="mt-2 flex justify-center gap-4 text-gray-400 text-lg">
+                <a href="https://github.com/peggy2402" class="hover:text-red-500 transition"><i class="fa-brands fa-github"></i></a>
+                <a href="https://www.facebook.com/huongnoichoigame" class="hover:text-blue-500 transition"><i class="fa-brands fa-facebook"></i></a>
+                <a href="https://www.instagram.com/x.savalak/" class="hover:text-pink-500 transition"><i class="fa-brands fa-instagram"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <div id="action-bar" class="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] z-40 hidden transition-transform translate-y-full">
         <div class="max-w-4xl mx-auto flex gap-3">
-            <button id="btn-download-zip" class="hidden flex-1 bg-slate-800 text-white py-3 rounded-xl font-bold shadow-lg active:scale-95 transition">
-                <i class="fa-solid fa-file-zipper"></i> Tải ZIP (PC)
+            <button id="btn-download-zip" class="hidden flex-1 bg-slate-800 hover:bg-slate-700 text-white py-3.5 rounded-xl font-bold shadow-lg active:scale-95 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-file-zipper"></i> Tải File ZIP (PC)
             </button>
-            <button id="btn-download-mobile" class="hidden flex-1 bg-red-500 text-white py-3 rounded-xl font-bold shadow-lg active:scale-95 transition">
-                <i class="fa-solid fa-images"></i> Tải Tất Cả (Mobile)
+            <button id="btn-download-mobile" class="hidden flex-1 bg-red-500 hover:bg-red-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-red-200 active:scale-95 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-images"></i> Lưu Vào Album (Mobile)
             </button>
         </div>
     </div>

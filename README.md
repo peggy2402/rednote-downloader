@@ -1,4 +1,4 @@
-# RedNote Downloader – Xiaohongshu (Little Red Book) Downloader
+# RedNote Downloader – Xiaohongshu (Tiểu Hồng Thư) Downloader
 
 Ứng dụng web giúp tải xuống hình ảnh và video từ Xiaohongshu (RedNote) **không có watermark (logo chìm)**. Hỗ trợ tự động xử lý link rút gọn, link chứa văn bản hỗn độn và tải hàng loạt.
 
@@ -12,8 +12,9 @@
 - **No Watermark**  
   Tải video và hình ảnh gốc với chất lượng cao nhất, không dính logo.
 
-- **Đa nền tảng**  
-  - **PC**: Hỗ trợ gom tất cả ảnh/video vào một file ZIP để tải nhanh.  
+- **Đa nền tảng**
+
+  - **PC**: Hỗ trợ gom tất cả ảnh/video vào một file ZIP để tải nhanh.
   - **Mobile (iOS/Android)**: Hỗ trợ cơ chế Proxy Stream để tải trực tiếp vào thư viện ảnh (giúp vượt qua lỗi chặn download của trình duyệt mobile).
 
 - **Giao diện thân thiện**  
@@ -21,11 +22,29 @@
 
 ---
 
+## 🛠 Hướng dẫn cài đặt tiện ích Get Cookies
+
+### 1. Truy cập vào trình duyệt
+
+### 2. Nhấn vào 3 chấm dọc (hoặc ngang nếu sử dụng Edge)
+
+### 3. Chọn `Cài đặt (Settings)` => Chọn `Tiện ích (Extensions)`
+
+### 4. Bật `Chế độ cho nhà phát triển (Developer mode)`
+
+### 5. - Nếu dùng `Microsoft Edge` thì chọn `Pack extension`
+
+       - Nếu dùng `Chrome` thì chọn `Tải tiện ích đã giải nén`
+
+### 6. Cuối dùng chọn folder `xhs_cookie` là xong
+
+> Còn nếu không muốn thì làm như `Bước 2: Lấy Cookie từ trình duyệt`
+
 ## 🛠 Cài đặt & Chạy
 
 ### 1. Yêu cầu hệ thống
 
-- Python 3.8 trở lên  
+- Python 3.8 trở lên
 - Git (tùy chọn)
 
 ### 2. Cài đặt thư viện
@@ -43,21 +62,27 @@ Xiaohongshu yêu cầu **Cookie** để việc tải dữ liệu được ổn �
 #### Bước 1: Tạo file `.env`
 
 Tạo file `.env` ở thư mục gốc của dự án.
+Hoặc gõ lệnh:
+
+```bash
+cp .env.example .env
+```
 
 #### Bước 2: Lấy Cookie từ trình duyệt
 
 1. Truy cập https://www.xiaohongshu.com và đăng nhập
 2. Nhấn `F12` (Developer Tools) → chuyển sang tab **Network**
 3. Refresh trang (`F5`)
-4. Tìm request tên `www.xiaohongshu.com` (hoặc `explore`)
-5. Trong phần **Request Headers**, copy toàn bộ giá trị của **Cookie**
+4. Chọn `Fetch/XHR` và Tích vào ô `Preserve log`
+5. Tìm request tên `webprofile` ở phần Filter
+6. Trong phần **Request Headers**, copy toàn bộ giá trị của **Cookie**
 
 #### Bước 3: Dán vào file `.env`
 
 Ví dụ:
 
 ```env
-XHS_COOKIE=web_session=xxxxxx; a1=xxxxxx; ...
+XHS_COOKIE=abRequestId=xxxxxx; web_session=xxxxxxx; a1=xxxxxx; ...
 ```
 
 Nếu bạn có nhiều Cookie dự phòng, hãy ngăn cách chúng bằng dấu gạch đứng `|`:
@@ -77,7 +102,7 @@ python app.py
 Mở trình duyệt và truy cập:
 
 ```
-http://localhost:5000
+http://127.0.0.1:5000
 ```
 
 ---
@@ -103,10 +128,11 @@ RedNote-Downloader/
 
 ## 📝 Lưu ý sử dụng
 
-- Link dạng `http://xhslink.com/...` sẽ được hệ thống tự động giải mã.  
+- Link dạng `http://xhslink.com/...` sẽ được hệ thống tự động giải mã.
+- Các dạng link rút gọn sẽ khó khăn có thể bị lỗi
 - Trên iPhone (iOS), khi bấm **"Tải Tất Cả"**, hệ thống sẽ bật nhiều popup tải xuống lần lượt → vui lòng cho phép trình duyệt tải file.
 
 ---
 
-> Nếu bạn thấy dự án hữu ích, hãy ⭐ star repo để ủng hộ nhé!
-
+> Dự án vẫn đang được **UPDATE** ... Nếu bạn thấy dự án hữu ích, hãy ⭐ star repo để ủng hộ nhé!
+> Source code by peggy2402 !
