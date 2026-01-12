@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template, send_file, Response, stream_with_context
-from scraper import scrape_xhs
+from scraper import scrape_xhs, extract_urls_from_text
 from dotenv import load_dotenv
 import logging
 import os
@@ -14,6 +14,9 @@ load_dotenv()
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 
+# --- QUẢN LÝ COOKIE ---
+# Bạn nên lấy cookie từ trình duyệt (F12 -> Network -> request bất kỳ -> copy value cookie)
+# Lưu vào file .env biến XHS_COOKIE. Nếu có nhiều cookie, cách nhau bằng dấu |
 env_cookie = os.getenv("XHS_COOKIE")
 COOKIE_POOL = []
 if env_cookie:
@@ -22,7 +25,12 @@ if env_cookie:
     else:
         COOKIE_POOL.append(env_cookie)
 
-# Header giả lập để vượt qua cơ chế chặn của XHS
+def get_random_cookie():
+    if not COOKIE_POOL:
+        return None
+    return random.choice(COOKIE_POOL)
+
+# Header giả lập
 def get_headers():
     return {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
@@ -35,34 +43,48 @@ def home():
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze():
-    # ... (Giữ nguyên logic analyze cũ) ...
     data = request.get_json()
-    raw_urls = data.get('urls', '').split('\n')
-    user_provided_cookie = data.get('custom_cookie', '').strip()
+    raw_text = data.get('urls', '')
     
+    # BƯỚC 1: TRÍCH XUẤT LINK TỪ VĂN BẢN HỖN ĐỘN
+    # Người dùng có thể paste cả đoạn văn kèm link, hàm này sẽ lọc ra list link sạch
+    clean_urls = extract_urls_from_text(raw_text)
+    
+    if not clean_urls:
+        return jsonify({"success": False, "message": "Không tìm thấy link Xiaohongshu hợp lệ nào."}), 400
+
     results = []
     errors = []
 
-    for raw_url in raw_urls:
-        if not raw_url.strip(): continue
-        current_cookie = user_provided_cookie if user_provided_cookie else (random.choice(COOKIE_POOL) if COOKIE_POOL else None)
+    # BƯỚC 2: XỬ LÝ TỪNG LINK
+    for url in clean_urls:
+        # Sử dụng cookie của Server (ẩn danh với người dùng cuối)
+        current_cookie = get_random_cookie()
+        
         try:
-            result = scrape_xhs(raw_url, cookies=current_cookie)
+            # Truyền url đã lọc vào scraper
+            result = scrape_xhs(url, cookies=current_cookie)
             if result and result.get('success'):
                 results.append(result['data'])
             else:
-                msg = result.get('message', 'Unknown') if result else "No data"
-                errors.append(f"{raw_url}: {msg}")
+                msg = result.get('message', 'Lỗi không xác định') if result else "Không lấy được dữ liệu"
+                errors.append(f"Link lỗi: {msg}")
         except Exception as e:
-            errors.append(f"Sys Error: {str(e)}")
+            logging.error(f"System Error for {url}: {e}")
+            errors.append(f"Lỗi hệ thống khi xử lý link")
 
     if not results:
+        # Nếu thất bại toàn bộ
         return jsonify({"success": False, "message": " | ".join(errors)}), 400
 
-    return jsonify({"success": True, "data": results})
+    # Trả về dù chỉ thành công 1 link, kèm theo danh sách lỗi (nếu có) để debug
+    return jsonify({
+        "success": True, 
+        "data": results,
+        "debug_errors": errors 
+    })
 
-# --- API MỚI: PROXY CHO MOBILE ---
-# Giúp Mobile tải file thông qua Server để tránh lỗi CORS và Force Download
+# --- API PROXY (QUAN TRỌNG CHO MOBILE) ---
 @app.route('/api/proxy')
 def proxy_file():
     url = request.args.get('url')
@@ -71,12 +93,13 @@ def proxy_file():
     if not url: return "Missing URL", 400
 
     try:
-        # Stream content từ XHS về Client thông qua Server mình
+        # Stream request để không tốn RAM server
         req = requests.get(url, headers=get_headers(), stream=True, timeout=20)
         
+        # Chuyển tiếp stream xuống client
         return Response(
-            stream_with_context(req.iter_content(chunk_size=1024)),
-            content_type=req.headers['content-type'],
+            stream_with_context(req.iter_content(chunk_size=4096)),
+            content_type=req.headers.get('content-type', 'application/octet-stream'),
             headers={
                 "Content-Disposition": f"attachment; filename={filename}"
             }
@@ -84,7 +107,7 @@ def proxy_file():
     except Exception as e:
         return f"Proxy Error: {e}", 500
 
-# --- API UPDATE: ZIP CẢ VIDEO VÀ ẢNH ---
+# --- API DOWNLOAD ZIP (CHO PC) ---
 @app.route('/api/download-zip', methods=['POST'])
 def download_zip():
     data = request.get_json()
@@ -92,26 +115,23 @@ def download_zip():
     
     if not files: return jsonify({"error": "No files"}), 400
 
-    # Sử dụng BytesIO để tạo file ZIP trong RAM
     mem_file = io.BytesIO()
     
     try:
         with zipfile.ZipFile(mem_file, 'w', zipfile.ZIP_DEFLATED) as zf:
             for file_info in files:
                 url = file_info['url']
-                # Đảm bảo tên file không bị lỗi ký tự lạ
                 filename = file_info['filename']
                 
                 try:
-                    # Tải file từ XHS (Stream để tiết kiệm RAM server với video nặng)
-                    with requests.get(url, headers=get_headers(), stream=True, timeout=30) as r:
+                    # Timeout ngắn hơn để tránh treo server lâu
+                    with requests.get(url, headers=get_headers(), stream=True, timeout=15) as r:
                         if r.status_code == 200:
-                            # Đọc nội dung và ghi vào ZIP
                             zf.writestr(filename, r.content)
                         else:
-                            logging.error(f"Failed to download {url}: {r.status_code}")
+                            logging.error(f"Download fail: {r.status_code} - {url}")
                 except Exception as e:
-                    logging.error(f"Error zipping {url}: {e}")
+                    logging.error(f"Zip error: {e}")
                     
         mem_file.seek(0)
         return send_file(
