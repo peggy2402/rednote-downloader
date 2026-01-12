@@ -1,4 +1,4 @@
-# RedNote Downloader – Xiaohongshu (Tiểu Hồng Thư) Downloader
+# RedNote Saver – Xiaohongshu (Tiểu Hồng Thư) Downloader by peggy2402
 
 Ứng dụng web giúp tải xuống hình ảnh và video từ Xiaohongshu (RedNote) **không có watermark (logo chìm)**. Hỗ trợ tự động xử lý link rút gọn, link chứa văn bản hỗn độn và tải hàng loạt.
 
@@ -32,9 +32,7 @@
 
 ### 4. Bật `Chế độ cho nhà phát triển (Developer mode)`
 
-### 5. - Nếu dùng `Microsoft Edge` thì chọn `Pack extension`
-
-       - Nếu dùng `Chrome` thì chọn `Tải tiện ích đã giải nén`
+### 5. Nếu dùng `Microsoft Edge` thì chọn `Pack extension`, dùng `Chrome` thì chọn `Tải tiện ích đã giải nén`
 
 ### 6. Cuối dùng chọn folder `xhs_cookie` là xong
 
