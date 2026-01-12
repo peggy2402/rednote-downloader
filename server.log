@@ -1767,3 +1767,215 @@
 2026-01-12 21:30:42,690 [INFO] 192.168.1.8 - - [12/Jan/2026 21:30:42] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
 2026-01-12 21:30:42,691 [INFO] 192.168.1.8 - - [12/Jan/2026 21:30:42] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
 2026-01-12 21:30:42,737 [INFO] 192.168.1.8 - - [12/Jan/2026 21:30:42] "[36mGET /static/images/logo32.png HTTP/1.1[0m" 304 -
+2026-01-12 21:38:22,692 [INFO] 🚀 SERVER KHỞI ĐỘNG: Đã tải 1 cookie vào hệ thống.
+2026-01-12 21:38:22,711 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.8:5000
+2026-01-12 21:38:22,711 [INFO] [33mPress CTRL+C to quit[0m
+2026-01-12 21:38:22,712 [INFO]  * Restarting with stat
+2026-01-12 21:38:22,963 [INFO] 🚀 SERVER KHỞI ĐỘNG: Đã tải 1 cookie vào hệ thống.
+2026-01-12 21:38:22,971 [WARNING]  * Debugger is active!
+2026-01-12 21:38:22,971 [INFO]  * Debugger PIN: 282-585-716
+2026-01-12 21:38:24,833 [INFO] 192.168.1.8 - - [12/Jan/2026 21:38:24] "GET / HTTP/1.1" 200 -
+2026-01-12 21:38:24,939 [INFO] 192.168.1.8 - - [12/Jan/2026 21:38:24] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2026-01-12 21:38:24,939 [INFO] 192.168.1.8 - - [12/Jan/2026 21:38:24] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2026-01-12 21:38:25,028 [INFO] 192.168.1.8 - - [12/Jan/2026 21:38:25] "[36mGET /static/images/logo32.png HTTP/1.1[0m" 304 -
+2026-01-12 21:38:26,851 [INFO] ------------------------------
+2026-01-12 21:38:26,852 [INFO] 📩 Nhận request phân tích mới...
+2026-01-12 21:38:26,853 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 21:38:26,854 [INFO] 🚀 Bắt đầu Scrape: https://www.xiaohongshu.com/explore/69645383000000002103fadb?xsec_token=ABpZN6OWcdN2C3V9tmT0fqrfZAENmDrrOVeagK8Kpibeg=&xsec_source=pc_feed
+2026-01-12 21:38:26,877 [INFO] Attempting Strategy: API Lib
+2026-01-12 21:38:26,878 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 21:38:26,878 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 21:38:27,661 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 21:38:28,021 [INFO] ✅ THÀNH CÔNG: https://www.xiaohongshu.com/explore/69645383000000002103fadb?xsec_token=ABpZN6OWcdN2C3V9tmT0fqrfZAENmDrrOVeagK8Kpibeg=&xsec_source=pc_feed | Nguồn: HTML Soup
+2026-01-12 21:38:28,021 [INFO] 192.168.1.8 - - [12/Jan/2026 21:38:28] "POST /api/analyze HTTP/1.1" 200 -
+2026-01-12 22:44:27,450 [INFO] 🚀 SERVER KHỞI ĐỘNG: Đã tải 1 cookie vào hệ thống.
+2026-01-12 22:44:27,465 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.8:5000
+2026-01-12 22:44:27,466 [INFO] [33mPress CTRL+C to quit[0m
+2026-01-12 22:44:27,467 [INFO]  * Restarting with stat
+2026-01-12 22:44:27,725 [INFO] 🚀 SERVER KHỞI ĐỘNG: Đã tải 1 cookie vào hệ thống.
+2026-01-12 22:44:27,730 [WARNING]  * Debugger is active!
+2026-01-12 22:44:27,732 [INFO]  * Debugger PIN: 282-585-716
+2026-01-12 22:44:31,772 [INFO] 192.168.1.8 - - [12/Jan/2026 22:44:31] "GET / HTTP/1.1" 200 -
+2026-01-12 22:44:31,882 [INFO] 192.168.1.8 - - [12/Jan/2026 22:44:31] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2026-01-12 22:44:31,885 [INFO] 192.168.1.8 - - [12/Jan/2026 22:44:31] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2026-01-12 22:44:50,521 [INFO] ------------------------------
+2026-01-12 22:44:50,522 [INFO] 📩 Nhận request phân tích mới...
+2026-01-12 22:44:50,522 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:44:50,522 [INFO] 🚀 Bắt đầu Scrape: http://xhslink.com/o/5poVxSbMY6u
+2026-01-12 22:44:50,522 [INFO] Resolving short link: http://xhslink.com/o/5poVxSbMY6u
+2026-01-12 22:44:51,627 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:44:51,628 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:44:51,628 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:44:52,264 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:44:52,675 [INFO] Got Video via MasterURL Fallback: http://sns-video-alos.xhscdn.com/stream/79/110/258/01e964d4980713eb4f0370019bb1dea556_258.mp4
+2026-01-12 22:44:52,677 [INFO] ✅ THÀNH CÔNG: http://xhslink.com/o/5poVxSbMY6u | Nguồn: HTML Soup
+2026-01-12 22:44:52,677 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:44:52,678 [INFO] 🚀 Bắt đầu Scrape: https://www.xiaohongshu.com/explore/695fc6d1000000000e00d0cc?app_platform=ios&app_version=9.15.1&share_from_user_hidden=true&xsec_source=app_share&type=video&xsec_token=CBTtK-a1m85tgbS9v6jO624aoj8vWwasRBCu4S223B0cs=&author_share=1&xhsshare=CopyLink&shareRedId=OD82Qjk5Sks2NzUyOTgwNjk6OTlJSDtM&apptime=1767959043&share_id=f177a13b7c504d81b5a6ba96524ce2ab
+2026-01-12 22:44:52,678 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:44:52,678 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:44:52,679 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:44:53,379 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:44:53,804 [INFO] Got Video via MasterURL Fallback: http://sns-video-alos.xhscdn.com/stream/79/110/258/01e95fc6cf9dacae4f0370019b9e20ce34_258.mp4
+2026-01-12 22:44:53,806 [INFO] ✅ THÀNH CÔNG: https://www.xiaohongshu.com/explore/695fc6d1000000000e00d0cc?app_platform=ios&app_version=9.15.1&share_from_user_hidden=true&xsec_source=app_share&type=video&xsec_token=CBTtK-a1m85tgbS9v6jO624aoj8vWwasRBCu4S223B0cs=&author_share=1&xhsshare=CopyLink&shareRedId=OD82Qjk5Sks2NzUyOTgwNjk6OTlJSDtM&apptime=1767959043&share_id=f177a13b7c504d81b5a6ba96524ce2ab | Nguồn: HTML Soup
+2026-01-12 22:44:53,806 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:44:53,806 [INFO] 🚀 Bắt đầu Scrape: https://www.xiaohongshu.com/discovery/item/695e3bcf000000000d00a1e9?source=webshare&xhsshare=pc_web&xsec_token=ABC7zJMPzluVglCN7_B4vkeAX7a5lKrXRi7fnr9DOTAJk=&xsec_source=pc_share
+2026-01-12 22:44:53,807 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:44:53,807 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:44:53,808 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:44:54,266 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:44:54,636 [INFO] Got Video via MasterURL Fallback: http://sns-video-alos.xhscdn.com/stream/1/110/258/01e95e3bc9048b06010370019b9819b9cf_258.mp4
+2026-01-12 22:44:54,638 [INFO] ✅ THÀNH CÔNG: https://www.xiaohongshu.com/discovery/item/695e3bcf000000000d00a1e9?source=webshare&xhsshare=pc_web&xsec_token=ABC7zJMPzluVglCN7_B4vkeAX7a5lKrXRi7fnr9DOTAJk=&xsec_source=pc_share | Nguồn: HTML Soup
+2026-01-12 22:44:54,638 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:44:54,639 [INFO] 🚀 Bắt đầu Scrape: http://xhslink.com/o/926R8Wn12Wc
+2026-01-12 22:44:54,639 [INFO] Resolving short link: http://xhslink.com/o/926R8Wn12Wc
+2026-01-12 22:44:55,248 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:44:55,249 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:44:55,249 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:44:55,788 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:44:56,200 [INFO] Got Video via MasterURL Fallback: http://sns-video-alos.xhscdn.com/stream/79/110/258/01e95f43069d69894f0370019b9c1f6db1_258.mp4
+2026-01-12 22:44:56,202 [INFO] ✅ THÀNH CÔNG: http://xhslink.com/o/926R8Wn12Wc | Nguồn: HTML Soup
+2026-01-12 22:44:56,202 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:44:56,202 [INFO] 🚀 Bắt đầu Scrape: https://www.xiaohongshu.com/explore/69645383000000002103fadb?xsec_token=ABpZN6OWcdN2C3V9tmT0fqrfZAENmDrrOVeagK8Kpibeg=&xsec_source=pc_feed
+2026-01-12 22:44:56,203 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:44:56,204 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:44:56,204 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:44:56,883 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:44:57,312 [INFO] ✅ THÀNH CÔNG: https://www.xiaohongshu.com/explore/69645383000000002103fadb?xsec_token=ABpZN6OWcdN2C3V9tmT0fqrfZAENmDrrOVeagK8Kpibeg=&xsec_source=pc_feed | Nguồn: HTML Soup
+2026-01-12 22:44:57,313 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:44:57,313 [INFO] 🚀 Bắt đầu Scrape: https://www.xiaohongshu.com/discovery/item/695f7b350000000021033b9f?source=webshare&xhsshare=pc_web&xsec_token=AB4Fkr9UnXkIcfleFojN_YLQUHr3GvBGl0y6yQO_Y4ySg=&xsec_source=pc_share
+2026-01-12 22:44:57,313 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:44:57,314 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:44:57,314 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:44:57,768 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:44:58,076 [INFO] ✅ THÀNH CÔNG: https://www.xiaohongshu.com/discovery/item/695f7b350000000021033b9f?source=webshare&xhsshare=pc_web&xsec_token=AB4Fkr9UnXkIcfleFojN_YLQUHr3GvBGl0y6yQO_Y4ySg=&xsec_source=pc_share | Nguồn: HTML Soup
+2026-01-12 22:44:58,076 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:44:58,077 [INFO] 🚀 Bắt đầu Scrape: http://xhslink.com/o/22kMJYbND9W
+2026-01-12 22:44:58,077 [INFO] Resolving short link: http://xhslink.com/o/22kMJYbND9W
+2026-01-12 22:44:58,492 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:44:58,495 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:44:58,495 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:44:59,005 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:44:59,367 [INFO] ✅ THÀNH CÔNG: http://xhslink.com/o/22kMJYbND9W | Nguồn: HTML Soup
+2026-01-12 22:44:59,367 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:44:59,367 [INFO] 🚀 Bắt đầu Scrape: https://www.xiaohongshu.com/discovery/item/6960cb1f000000000a032374?source=webshare&xhsshare=pc_web&xsec_token=ABLW0DV0ro8yW8RmMQBPnqNZx7wbUz7Bj0wflEWGC1ojo=&xsec_source=pc_share
+2026-01-12 22:44:59,370 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:44:59,374 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:44:59,374 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:44:59,828 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:45:00,284 [INFO] Got Video via MasterURL Fallback: http://sns-video-alos.xhscdn.com/stream/1/110/258/01e960cdecdb70b3010370019ba22493e2_258.mp4
+2026-01-12 22:45:00,286 [INFO] ✅ THÀNH CÔNG: https://www.xiaohongshu.com/discovery/item/6960cb1f000000000a032374?source=webshare&xhsshare=pc_web&xsec_token=ABLW0DV0ro8yW8RmMQBPnqNZx7wbUz7Bj0wflEWGC1ojo=&xsec_source=pc_share | Nguồn: HTML Soup
+2026-01-12 22:45:00,287 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:45:00,287 [INFO] 🚀 Bắt đầu Scrape: https://www.xiaohongshu.com/discovery/item/695caefa000000002203930e?source=webshare&xhsshare=pc_web&xsec_token=ABCACr9S1-Lr4fp7M0dX5At7qlkoVENmsCOIj-Ax4XK-E=&xsec_source=pc_share
+2026-01-12 22:45:00,287 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:45:00,288 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:45:00,288 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:45:00,836 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:45:01,176 [INFO] ✅ THÀNH CÔNG: https://www.xiaohongshu.com/discovery/item/695caefa000000002203930e?source=webshare&xhsshare=pc_web&xsec_token=ABCACr9S1-Lr4fp7M0dX5At7qlkoVENmsCOIj-Ax4XK-E=&xsec_source=pc_share | Nguồn: HTML Soup
+2026-01-12 22:45:01,177 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:45:01,179 [INFO] 🚀 Bắt đầu Scrape: https://www.xiaohongshu.com/discovery/item/695e33e5000000002203b8ed?source=webshare&xhsshare=pc_web&xsec_token=ABC7zJMPzluVglCN7_B4vkePWIO3q4U-rTeyQ1HPXpNuM=&xsec_source=pc_share
+2026-01-12 22:45:01,179 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:45:01,180 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:45:01,180 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:45:01,656 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:45:02,195 [INFO] ✅ THÀNH CÔNG: https://www.xiaohongshu.com/discovery/item/695e33e5000000002203b8ed?source=webshare&xhsshare=pc_web&xsec_token=ABC7zJMPzluVglCN7_B4vkePWIO3q4U-rTeyQ1HPXpNuM=&xsec_source=pc_share | Nguồn: HTML Soup
+2026-01-12 22:45:02,195 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:45:02,196 [INFO] 🚀 Bắt đầu Scrape: https://www.xiaohongshu.com/discovery/item/6961fb72000000002203a9d3?source=webshare&xhsshare=pc_web&xsec_token=ABU1MZTbBEdcGYruXxpFt-zDE0tiqnaY97By8qz-EpHwM=&xsec_source=pc_share
+2026-01-12 22:45:02,197 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:45:02,198 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:45:02,198 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:45:02,662 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:45:02,982 [INFO] Got Video via MasterURL Fallback: http://sns-video-alos.xhscdn.com/stream/1/110/258/01e961faa704b9f0010370019ba6be790b_258.mp4
+2026-01-12 22:45:02,983 [INFO] ✅ THÀNH CÔNG: https://www.xiaohongshu.com/discovery/item/6961fb72000000002203a9d3?source=webshare&xhsshare=pc_web&xsec_token=ABU1MZTbBEdcGYruXxpFt-zDE0tiqnaY97By8qz-EpHwM=&xsec_source=pc_share | Nguồn: HTML Soup
+2026-01-12 22:45:02,984 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:45:02,984 [INFO] 🚀 Bắt đầu Scrape: https://www.xiaohongshu.com/explore/695fa3200000000022032338?xsec_token=AB4Fkr9UnXkIcfleFojN_YLbtAMy8zRPASBM5WzCjcdvs=&xsec_source=pc_feed
+2026-01-12 22:45:02,984 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:45:02,984 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:45:02,984 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:45:03,602 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:45:03,978 [INFO] Got Video via MasterURL Fallback: http://sns-video-alos.xhscdn.com/stream/1/110/258/01e95fa31f04bf74010370019b9d956d31_258.mp4
+2026-01-12 22:45:03,980 [INFO] ✅ THÀNH CÔNG: https://www.xiaohongshu.com/explore/695fa3200000000022032338?xsec_token=AB4Fkr9UnXkIcfleFojN_YLbtAMy8zRPASBM5WzCjcdvs=&xsec_source=pc_feed | Nguồn: HTML Soup
+2026-01-12 22:45:03,981 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:45:03,981 [INFO] 🚀 Bắt đầu Scrape: https://www.xiaohongshu.com/explore/695b8dc2000000002202daa1?xsec_token=ABXV74tc43PoEWBQxAd4TAW29Rlw1glMMCUASYeUau5Fo=&xsec_source=pc_feed
+2026-01-12 22:45:03,982 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:45:03,982 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:45:03,983 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:45:04,789 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:45:05,294 [INFO] Got Video via MasterURL Fallback: http://sns-video-alos.xhscdn.com/stream/1/110/258/01e95b8dc20715ec010370019b8da1dd0b_258.mp4
+2026-01-12 22:45:05,297 [INFO] ✅ THÀNH CÔNG: https://www.xiaohongshu.com/explore/695b8dc2000000002202daa1?xsec_token=ABXV74tc43PoEWBQxAd4TAW29Rlw1glMMCUASYeUau5Fo=&xsec_source=pc_feed | Nguồn: HTML Soup
+2026-01-12 22:45:05,297 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:45:05,298 [INFO] 🚀 Bắt đầu Scrape: https://www.xiaohongshu.com/discovery/item/6961953f000000000a03e9af?source=webshare&xhsshare=pc_web&xsec_token=ABU1MZTbBEdcGYruXxpFt-zAx5Zk1i4cxNJ1vmNCq4iwc=&xsec_source=pc_share
+2026-01-12 22:45:05,298 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:45:05,299 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:45:05,299 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:45:05,716 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:45:06,073 [INFO] Got Video via MasterURL Fallback: http://sns-video-alos.xhscdn.com/stream/1/110/258/01e961953f071cb8010370019ba52f2289_258.mp4
+2026-01-12 22:45:06,076 [INFO] ✅ THÀNH CÔNG: https://www.xiaohongshu.com/discovery/item/6961953f000000000a03e9af?source=webshare&xhsshare=pc_web&xsec_token=ABU1MZTbBEdcGYruXxpFt-zAx5Zk1i4cxNJ1vmNCq4iwc=&xsec_source=pc_share | Nguồn: HTML Soup
+2026-01-12 22:45:06,076 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:45:06,077 [INFO] 🚀 Bắt đầu Scrape: https://www.xiaohongshu.com/discovery/item/6964b1ba0000000022038a60?source=webshare&xhsshare=pc_web&xsec_token=ABpZN6OWcdN2C3V9tmT0fqrWQMhDTdv2KKUYbOvFA1SK0=&xsec_source=pc_share
+2026-01-12 22:45:06,078 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:45:06,079 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:45:06,079 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:45:06,699 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:45:07,029 [INFO] Got Video via MasterURL Fallback: http://sns-video-alos.xhscdn.com/stream/1/110/258/01e964b1ba057892010370019bb157dd39_258.mp4
+2026-01-12 22:45:07,031 [INFO] ✅ THÀNH CÔNG: https://www.xiaohongshu.com/discovery/item/6964b1ba0000000022038a60?source=webshare&xhsshare=pc_web&xsec_token=ABpZN6OWcdN2C3V9tmT0fqrWQMhDTdv2KKUYbOvFA1SK0=&xsec_source=pc_share | Nguồn: HTML Soup
+2026-01-12 22:45:07,031 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:45:07,032 [INFO] 🚀 Bắt đầu Scrape: https://www.xiaohongshu.com/explore/695f89b1000000002203852b?xsec_token=AB4Fkr9UnXkIcfleFojN_YLQ_la62UVupb6dS25uh66Is=&xsec_source=pc_feed
+2026-01-12 22:45:07,032 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:45:07,033 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:45:07,033 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:45:07,626 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:45:08,072 [INFO] ✅ THÀNH CÔNG: https://www.xiaohongshu.com/explore/695f89b1000000002203852b?xsec_token=AB4Fkr9UnXkIcfleFojN_YLQ_la62UVupb6dS25uh66Is=&xsec_source=pc_feed | Nguồn: HTML Soup
+2026-01-12 22:45:08,074 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:45:08,074 [INFO] 🚀 Bắt đầu Scrape: https://www.xiaohongshu.com/discovery/item/6964dd04000000001a02d44a?source=webshare&xhsshare=pc_web&xsec_token=ABpZN6OWcdN2C3V9tmT0fqrfEbJqO6Vx8fsqSIAEU3uHg=&xsec_source=pc_share
+2026-01-12 22:45:08,074 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:45:08,075 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:45:08,075 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:45:08,486 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:45:08,828 [INFO] Got Video via MasterURL Fallback: http://sns-video-alos.xhscdn.com/stream/1/110/258/01e964d8ad055e3e010370019bb201b92b_258.mp4
+2026-01-12 22:45:08,830 [INFO] ✅ THÀNH CÔNG: https://www.xiaohongshu.com/discovery/item/6964dd04000000001a02d44a?source=webshare&xhsshare=pc_web&xsec_token=ABpZN6OWcdN2C3V9tmT0fqrfEbJqO6Vx8fsqSIAEU3uHg=&xsec_source=pc_share | Nguồn: HTML Soup
+2026-01-12 22:45:08,830 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:45:08,831 [INFO] 🚀 Bắt đầu Scrape: https://www.xiaohongshu.com/explore/6960ef1a000000000d00976a?xsec_token=ABLW0DV0ro8yW8RmMQBPnqNThJccWaAM7xu92ksxaQaJM=&xsec_source=pc_feed
+2026-01-12 22:45:08,831 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:45:08,832 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:45:08,832 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:45:09,444 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:45:09,792 [INFO] ✅ THÀNH CÔNG: https://www.xiaohongshu.com/explore/6960ef1a000000000d00976a?xsec_token=ABLW0DV0ro8yW8RmMQBPnqNThJccWaAM7xu92ksxaQaJM=&xsec_source=pc_feed | Nguồn: HTML Soup
+2026-01-12 22:45:09,793 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:45:09,793 [INFO] 🚀 Bắt đầu Scrape: https://www.xiaohongshu.com/explore/695a40f300000000220327d2?xsec_token=ABFVEF6OuuEVf2FmaDN4cihjY4nd2eKFCXLf0SyHL3Hi4=&xsec_source=pc_feed
+2026-01-12 22:45:09,794 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:45:09,794 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:45:09,794 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:45:11,307 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:45:11,752 [INFO] Got Video via MasterURL Fallback: http://sns-video-alos.xhscdn.com/stream/79/110/258/01e95a40f321cb334f0370019b888def0a_258.mp4
+2026-01-12 22:45:11,752 [INFO] ✅ THÀNH CÔNG: https://www.xiaohongshu.com/explore/695a40f300000000220327d2?xsec_token=ABFVEF6OuuEVf2FmaDN4cihjY4nd2eKFCXLf0SyHL3Hi4=&xsec_source=pc_feed | Nguồn: HTML Soup
+2026-01-12 22:45:11,754 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:45:11,754 [INFO] 🚀 Bắt đầu Scrape: http://xhslink.com/o/1tijcwTw0NS
+2026-01-12 22:45:11,754 [INFO] Resolving short link: http://xhslink.com/o/1tijcwTw0NS
+2026-01-12 22:45:12,334 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:45:12,334 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:45:12,334 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:45:12,881 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:45:13,446 [INFO] Got Video via MasterURL Fallback: http://sns-video-alos.xhscdn.com/stream/79/110/258/01e95fc6cf9dacae4f0370019b9e20ce34_258.mp4
+2026-01-12 22:45:13,447 [INFO] ✅ THÀNH CÔNG: http://xhslink.com/o/1tijcwTw0NS | Nguồn: HTML Soup
+2026-01-12 22:45:13,448 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:45:13,448 [INFO] 🚀 Bắt đầu Scrape: https://www.xiaohongshu.com/discovery/item/69469606000000001e00c3a5?source=webshare&xhsshare=pc_web&xsec_token=ABJH7ucMw4LlRYLCl2NKClUs_QN9_lqGq_BxL0qSLdheU=&xsec_source=pc_share
+2026-01-12 22:45:13,448 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:45:13,448 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:45:13,448 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:45:13,976 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:45:14,304 [INFO] ✅ THÀNH CÔNG: https://www.xiaohongshu.com/discovery/item/69469606000000001e00c3a5?source=webshare&xhsshare=pc_web&xsec_token=ABJH7ucMw4LlRYLCl2NKClUs_QN9_lqGq_BxL0qSLdheU=&xsec_source=pc_share | Nguồn: HTML Soup
+2026-01-12 22:45:14,304 [INFO] ♻️  Đang sử dụng Cookie: abRequestId=de5...
+2026-01-12 22:45:14,307 [INFO] 🚀 Bắt đầu Scrape: https://www.xiaohongshu.com/explore/695cf750000000000e00e126?xsec_token=ABCACr9S1-Lr4fp7M0dX5At_h86lBuSzrHASMA3Zj1-98=&xsec_source=pc_feed
+2026-01-12 22:45:14,307 [INFO] Attempting Strategy: API Lib
+2026-01-12 22:45:14,307 [WARNING] Strategy API Lib failed: 'NoneType' object is not callable
+2026-01-12 22:45:14,307 [INFO] Attempting Strategy: HTML Mobile
+2026-01-12 22:45:14,884 [INFO] Attempting Strategy: HTML Desktop
+2026-01-12 22:45:15,230 [INFO] ✅ THÀNH CÔNG: https://www.xiaohongshu.com/explore/695cf750000000000e00e126?xsec_token=ABCACr9S1-Lr4fp7M0dX5At_h86lBuSzrHASMA3Zj1-98=&xsec_source=pc_feed | Nguồn: HTML Soup
+2026-01-12 22:45:15,231 [INFO] 192.168.1.8 - - [12/Jan/2026 22:45:15] "POST /api/analyze HTTP/1.1" 200 -
+2026-01-12 22:45:51,488 [INFO] 192.168.1.8 - - [12/Jan/2026 22:45:51] "[36mGET /static/images/logo32.png HTTP/1.1[0m" 304 -
